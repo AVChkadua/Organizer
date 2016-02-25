@@ -39,6 +39,7 @@ public final class MainWindow implements Runnable {
         listsPanel.setLayout(new GridLayout(1, 2));
         String[] data = {};
         addList(data, listsPanel);
+        addList(data, listsPanel);
         listsPanel.setPreferredSize(new Dimension(480,280));
         frame.add(listsPanel, BorderLayout.CENTER);
 
