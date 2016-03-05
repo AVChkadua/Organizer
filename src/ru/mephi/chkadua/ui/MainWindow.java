@@ -3,6 +3,7 @@ package ru.mephi.chkadua.ui;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
@@ -22,7 +23,7 @@ public final class MainWindow implements Runnable {
     public void run() {
 
         JFrame frame = new JFrame ("Органайзер материалов");
-        frame.setDefaultCloseOperation (JFrame.DISPOSE_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.add(new JLabel());
         frame.setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
         frame.setLocationByPlatform(true);
@@ -43,12 +44,23 @@ public final class MainWindow implements Runnable {
         listsPanel.setPreferredSize(new Dimension(480,280));
         frame.add(listsPanel, BorderLayout.CENTER);
 
+        ActionListener addFile = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                FileAdder fileAdder = new FileAdder(frame);
+                fileAdder.setLocationByPlatform(true);
+
+                fileAdder.setVisible(true);
+            }
+        };
+
         JPanel buttonsPanel = new JPanel();
-        buttonsPanel.setLayout(new GridLayout(1, 4));
-        addButton("Добавить...", null, buttonsPanel);
+        buttonsPanel.setLayout(new GridLayout(1, 5));
+        addButton("Добавить файл...", addFile, buttonsPanel);
         addButton("Удалить", null, buttonsPanel);
         addButton("Открыть", null, buttonsPanel);
         addButton("Переименовать...", null, buttonsPanel);
+        addButton("О программе", null, buttonsPanel);
         frame.add(buttonsPanel, BorderLayout.SOUTH);
 
         Border border = BorderFactory.createEmptyBorder(10,10,10,10);
