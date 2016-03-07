@@ -1,19 +1,27 @@
 package ru.mephi.chkadua.ui;
 
+import ru.mephi.chkadua.FileInfoContainer;
+import ru.mephi.chkadua.InfoParser;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Класс окна с добавлением материала.
  * @author Anton_Chkadua
  */
 public class FileAdder extends JFrame {
+    /**
+     * Конструктор окна добавления файла
+    */
 
-    public FileAdder(JFrame parent) {
+    public FileAdder() {
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         JFileChooser fc = new JFileChooser();
 
         setTitle("Добавление нового материала");
@@ -22,19 +30,21 @@ public class FileAdder extends JFrame {
         ActionListener openFileChooser = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                fc.showOpenDialog(parent);
-                String pathname = fc.getSelectedFile().getAbsolutePath();
-                File f = new File(pathname);
-                if (!f.exists()) {
-                    JOptionPane.showMessageDialog(parent, "Файл не найден", "Ошибка", JOptionPane.ERROR_MESSAGE);
-                } else {
-                    filepath.setText(pathname);
+                int returnVal = fc.showOpenDialog(FileAdder.this);
+                if (returnVal == JFileChooser.APPROVE_OPTION) {
+                    String pathname = fc.getSelectedFile().getAbsolutePath();
+                    File f = new File(pathname);
+                    if (!f.exists()) {
+                        JOptionPane.showMessageDialog(FileAdder.this, "Файл не найден", "Ошибка", JOptionPane.ERROR_MESSAGE);
+                    } else {
+                        filepath.setText(pathname);
+                    }
                 }
             }
         };
 
         filepath.setEditable(false);
-        JLabel inputName = new JLabel("Введите категорию материала");
+        JLabel inputName = new JLabel("Введите название материала");
         JLabel inputCategory = new JLabel("Введите категорию");
         JTextField name = new JTextField();
         JTextField category = new JTextField();
@@ -46,7 +56,26 @@ public class FileAdder extends JFrame {
         fileAdderPanel.add(category);
 
         JPanel addButtonPanel = new JPanel();
-        addButton("Добавить", null, addButtonPanel);
+        addButton("Добавить",
+                new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        if (!filepath.getText().equals("Выберите файл")) {
+                            FileInfoContainer info = new FileInfoContainer();
+                            info.setName(name.getText());
+                            info.setCategory(category.getText());
+                            InfoParser parser = new InfoParser();
+                            info.setPath(filepath.getText());
+                            try {
+                                parser.addFile(info);
+                            } catch (IOException e1) {
+                                e1.printStackTrace();
+                                // TODO Дописать нормальную обработку исключения
+                            }
+                            FileAdder.this.setVisible(false);
+                        }
+                    }
+                }, addButtonPanel);
 
         add(fileAdderPanel);
         add(addButtonPanel,BorderLayout.SOUTH);

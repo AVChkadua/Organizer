@@ -47,9 +47,8 @@ public final class MainWindow implements Runnable {
         ActionListener addFile = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                FileAdder fileAdder = new FileAdder(frame);
+                FileAdder fileAdder = new FileAdder();
                 fileAdder.setLocationByPlatform(true);
-
                 fileAdder.setVisible(true);
             }
         };
