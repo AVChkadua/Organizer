@@ -3,7 +3,6 @@ package ru.mephi.chkadua.ui;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
@@ -38,19 +37,19 @@ public final class MainWindow implements Runnable {
 
         JPanel listsPanel = new JPanel();
         listsPanel.setLayout(new GridLayout(1, 2));
+
+        // TODO добавить подгрузку списка категорий из файла
         String[] data = {};
         addList(data, listsPanel);
         addList(data, listsPanel);
         listsPanel.setPreferredSize(new Dimension(480,280));
         frame.add(listsPanel, BorderLayout.CENTER);
 
-        ActionListener addFile = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                FileAdder fileAdder = new FileAdder();
-                fileAdder.setLocationByPlatform(true);
-                fileAdder.setVisible(true);
-            }
+
+        ActionListener addFile = e -> {
+            FileAdder fileAdder = new FileAdder();
+            fileAdder.setLocationByPlatform(true);
+            fileAdder.setVisible(true);
         };
 
         JPanel buttonsPanel = new JPanel();
@@ -95,7 +94,7 @@ public final class MainWindow implements Runnable {
         list.setLayoutOrientation(JList.VERTICAL);
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         list.setVisibleRowCount(-1);
-        JScrollPane scrollBar = new JScrollPane();
+        JScrollPane scrollBar = new JScrollPane(list);
         scrollBar.setViewportView(list);
         panel.add(scrollBar);
     }

@@ -17,7 +17,7 @@ public class InfoParser {
      * @return info Динамический массив с информацией
      * @throws IOException
      */
-    public ArrayList<FileInfoContainer> getFilesInfo() throws IOException {
+    public static ArrayList<FileInfoContainer> getFilesInfo() throws IOException {
         ArrayList<FileInfoContainer> info = new ArrayList<>();
         JsonReader reader = new JsonReader(new FileReader("categories.txt"));
         reader.beginArray();
@@ -39,7 +39,7 @@ public class InfoParser {
      * @param info Объект с информацией о материале
      * @throws IOException
      */
-    public void addFile(FileInfoContainer info) throws IOException {
+    public static void addFile(FileInfoContainer info) throws IOException {
         JsonParser parser = new JsonParser();
         JsonElement jsonElement = parser.parse(new FileReader("categories.txt"));
         JsonArray array = jsonElement.getAsJsonArray();

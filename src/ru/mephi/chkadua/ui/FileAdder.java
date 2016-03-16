@@ -6,7 +6,6 @@ import ru.mephi.chkadua.InfoParser;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
@@ -27,18 +26,15 @@ public class FileAdder extends JFrame {
         setTitle("Добавление нового материала");
         JPanel fileAdderPanel = new JPanel(new GridLayout(3, 2));
         JTextField filepath = new JTextField("Выберите файл");
-        ActionListener openFileChooser = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int returnVal = fc.showOpenDialog(FileAdder.this);
-                if (returnVal == JFileChooser.APPROVE_OPTION) {
-                    String pathname = fc.getSelectedFile().getAbsolutePath();
-                    File f = new File(pathname);
-                    if (!f.exists()) {
-                        JOptionPane.showMessageDialog(FileAdder.this, "Файл не найден", "Ошибка", JOptionPane.ERROR_MESSAGE);
-                    } else {
-                        filepath.setText(pathname);
-                    }
+        ActionListener openFileChooser = e -> {
+            int returnVal = fc.showOpenDialog(FileAdder.this);
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                String pathname = fc.getSelectedFile().getAbsolutePath();
+                File f = new File(pathname);
+                if (!f.exists()) {
+                    JOptionPane.showMessageDialog(FileAdder.this, "Файл не найден", "Ошибка", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    filepath.setText(pathname);
                 }
             }
         };
@@ -57,23 +53,19 @@ public class FileAdder extends JFrame {
 
         JPanel addButtonPanel = new JPanel();
         addButton("Добавить",
-                new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        if (!filepath.getText().equals("Выберите файл")) {
-                            FileInfoContainer info = new FileInfoContainer();
-                            info.setName(name.getText());
-                            info.setCategory(category.getText());
-                            InfoParser parser = new InfoParser();
-                            info.setPath(filepath.getText());
-                            try {
-                                parser.addFile(info);
-                            } catch (IOException e1) {
-                                e1.printStackTrace();
-                                // TODO Дописать нормальную обработку исключения
-                            }
-                            FileAdder.this.setVisible(false);
+                e -> {
+                    if (!filepath.getText().equals("Выберите файл")) {
+                        FileInfoContainer info = new FileInfoContainer();
+                        info.setName(name.getText());
+                        info.setCategory(category.getText());
+                        info.setPath(filepath.getText());
+                        try {
+                            InfoParser.addFile(info);
+                        } catch (IOException e1) {
+                            JOptionPane.showMessageDialog(this, "Произошла ошибка.\n Попробуйте снова.",
+                                    "Ошибка", JOptionPane.ERROR_MESSAGE);
                         }
+                        FileAdder.this.setVisible(false);
                     }
                 }, addButtonPanel);
 
