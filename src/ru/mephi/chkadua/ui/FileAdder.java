@@ -15,9 +15,6 @@ import java.io.IOException;
  * @author Anton_Chkadua
  */
 public class FileAdder extends JFrame {
-    /**
-     * Конструктор окна добавления файла
-    */
 
     public FileAdder() {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -62,7 +59,7 @@ public class FileAdder extends JFrame {
                         try {
                             InfoParser.addFile(info);
                         } catch (IOException e1) {
-                            JOptionPane.showMessageDialog(this, "Произошла ошибка.\n Попробуйте снова.",
+                            JOptionPane.showMessageDialog(this, "Произошла ошибка.\nПопробуйте снова.",
                                     "Ошибка", JOptionPane.ERROR_MESSAGE);
                         }
                         FileAdder.this.setVisible(false);
@@ -77,12 +74,11 @@ public class FileAdder extends JFrame {
     }
 
     /**
-     * Метод, добавляющий кнопку
+     * Добавляет кнопку
      * @param label Надпись
      * @param listener Обработчик
      * @param panel Панель, в которую добавляется кнопка
      */
-
     private void addButton(String label, ActionListener listener, JPanel panel) {
         JButton button = new JButton(label);
         button.addActionListener(listener);
