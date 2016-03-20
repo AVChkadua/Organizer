@@ -1,0 +1,33 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+repositories{
+  mavenCentral()
+}
+
+dependencies{
+  compile fileTree(dir: 'libs', include: ['*.jar'])
+  compile 'com.google.code.gson:gson:2.+'
+}
+
+sourceCompatibility = 1.8
+mainClassName = "ru.mephi.chkadua.ui.MainWindow"
+
+jar {
+  manifest {
+    attributes 'Main-Class': 'ru.mephi.chkadua.ui.MainWindow'
+  }
+}
+
+sourceSets{
+  main{
+    java{
+      srcDir 'src'
+    }
+  }
+}
+
+task wrapper(type: Wrapper){
+  gradleVersion = '2.3'
+}
+
