@@ -1,8 +1,8 @@
 package ru.mephi.chkadua.ui;
 
-import ru.mephi.chkadua.FileInfoContainer;
+import ru.mephi.chkadua.FileInfo;
+import ru.mephi.chkadua.FilesInfoRepository;
 import ru.mephi.chkadua.InfoParser;
-import ru.mephi.chkadua.SessionContainer;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -25,6 +25,7 @@ public final class MainWindow implements Runnable {
     private JList<String> categoriesList;
     private JList<String> filesList;
     private JFrame frame;
+    private FileAdderWithRefresh fileAdder = new FileAdderWithRefresh();
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new MainWindow());
@@ -49,47 +50,32 @@ public final class MainWindow implements Runnable {
         JPanel listsPanel = new JPanel();
         listsPanel.setLayout(new GridLayout(1, 2));
 
-        categoriesList = addList(new String[0], listsPanel);
-        filesList = addList(new String[0], listsPanel);
         try {
+            InfoParser.createFileIfNotExists();
             refreshCategoriesList();
         } catch (IOException e) {
             JOptionPane.showMessageDialog(frame,"Ошибка при загрузке списка категорий.", "Ошибка",
                     JOptionPane.ERROR_MESSAGE);
         }
+
+        categoriesList = addList(new String[0], listsPanel);
+        filesList = addList(new String[0], listsPanel);
         categoriesList.addListSelectionListener(e -> {
             String selectedCategory = categoriesList.getSelectedValue();
-            try {
-                refreshFilesList(selectedCategory);
-            } catch (IOException e1) {
-                JOptionPane.showMessageDialog(frame,"Ошибка при загрузке списка файлов.","Ошибка",
-                        JOptionPane.ERROR_MESSAGE);
-            }
+            refreshFilesList(selectedCategory);
         });
         listsPanel.setPreferredSize(new Dimension(480,280));
         frame.add(listsPanel, BorderLayout.CENTER);
 
-
-        ActionListener addFile = e -> {
-            FileAdderWithRefresh fileAdder = new FileAdderWithRefresh();
-            fileAdder.setLocationByPlatform(true);
-            fileAdder.setVisible(true);
-        };
-
-        ActionListener deleteFile = e -> {
-            try {
-                InfoParser.deleteFile(categoriesList.getSelectedValue(), filesList.getSelectedValue());
-            } catch (IOException e1) {
-                JOptionPane.showMessageDialog(frame, "Ошибка при удалении файла.", "Ошибка",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-            refreshLists();
-        };
-
         JPanel buttonsPanel = new JPanel();
         buttonsPanel.setLayout(new GridLayout(1, 5));
-        addButton("Добавить файл...", addFile, buttonsPanel);
-        addButton("Удалить", deleteFile, buttonsPanel);
+        addButton("Добавить файл...", e -> {
+            if (!fileAdder.isShowing()) {
+                fileAdder.setLocationByPlatform(true);
+                fileAdder.setVisible(true);
+            }
+        }, buttonsPanel);
+        addButton("Удалить", e -> deleteFileInfo(), buttonsPanel);
         addButton("Открыть", null, buttonsPanel);
         addButton("Переименовать...", null, buttonsPanel);
         addButton("О программе", null, buttonsPanel);
@@ -134,29 +120,33 @@ public final class MainWindow implements Runnable {
 
     /**
      * Обновляет список категорий в окне приложения
-     * @throws IOException
      */
-    private void refreshCategoriesList() throws IOException {
-        categoriesList.setListData(new String[0]);
-        SessionContainer container = SessionContainer.getSessionContainer();
-        container.getFilesAndCategories();
-        String[] categoriesArray = new String[container.getCategoriesNames().size()];
-        categoriesArray = container.getCategoriesNames().toArray(categoriesArray);
-        categoriesList.setListData(categoriesArray);
+    private void refreshCategoriesList() {
+        try {
+            String selected = categoriesList.getSelectedValue();
+            categoriesList.setListData(new String[0]);
+            FilesInfoRepository repo = FilesInfoRepository.getFilesInfoRepository();
+            repo.getFiles();
+            String[] categoriesArray = new String[repo.getCategoriesNames().size()];
+            categoriesArray = repo.getCategoriesNames().toArray(categoriesArray);
+            categoriesList.setListData(categoriesArray);
+            categoriesList.setSelectedValue(selected, true);
+        } catch (IOException e1) {
+                JOptionPane.showMessageDialog(frame,"Ошибка при загрузке списка файлов.","Ошибка",
+                        JOptionPane.ERROR_MESSAGE);
+        }
     }
-
     /**
      * Обновляет список файлов определённой категории в окне приложения
      * @param category Название выбранной категории
-     * @throws IOException
      */
-    private void refreshFilesList(String category) throws IOException {
+    private void refreshFilesList(String category) {
         filesList.setListData(new String[0]);
-        ArrayList<FileInfoContainer> files = SessionContainer.getSessionContainer().getFilesByCategoryName(category);
+        ArrayList<FileInfo> files = FilesInfoRepository.getFilesInfoRepository().getFilesByCategory(category);
         if (files != null) {
             String[] filesNamesArray = new String[files.size()];
             int counter = 0;
-            for (FileInfoContainer file : files) {
+            for (FileInfo file : files) {
                 filesNamesArray[counter] = file.getName();
                 counter++;
             }
@@ -168,13 +158,46 @@ public final class MainWindow implements Runnable {
      * Обновляет все списки в окне приложения
      */
     private void refreshLists() {
+        refreshCategoriesList();
+        refreshFilesList(categoriesList.getSelectedValue());
+    }
+
+    //TODO доделать переименование файла и добавить переименование категорий
+    /*
+    public void renameFile() {
         try {
-            refreshCategoriesList();
-            refreshFilesList(categoriesList.getSelectedValue());
-        } catch (IOException e1) {
-            JOptionPane.showMessageDialog(frame, "Ошибка при обновлении списков.", "Ошибка",
+            if (filesList.getSelectedValue() == null) {
+                JOptionPane.showMessageDialog(frame, "Выберите файл или категорию для переименования",
+                        "Ошибка", JOptionPane.WARNING_MESSAGE);
+            } else {
+                FilesInfoRepository.getFilesInfoRepository().renameFile(
+                        categoriesList.getSelectedValue(), filesList.getSelectedValue());
+                InfoParser.deleteFileInfo(categoriesList.getSelectedValue(), filesList.getSelectedValue());
+            }
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(frame, "Ошибка при переименовании файла.", "Ошибка",
                     JOptionPane.ERROR_MESSAGE);
         }
+    }*/
+
+    /**
+     * Удаляет информацию о файле из JSON-файла и хранилища
+     */
+    private void deleteFileInfo() {
+        try {
+            if (filesList.getSelectedValue() == null) {
+                JOptionPane.showMessageDialog(frame, "Выберите файл или категорию для удаления",
+                        "Ошибка", JOptionPane.WARNING_MESSAGE);
+            } else {
+                FilesInfoRepository.getFilesInfoRepository().removeFile(
+                        categoriesList.getSelectedValue(), filesList.getSelectedValue());
+                InfoParser.deleteFileInfo(categoriesList.getSelectedValue(), filesList.getSelectedValue());
+            }
+        } catch (IOException e1) {
+            JOptionPane.showMessageDialog(frame, "Ошибка при удалении файла.", "Ошибка",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+        refreshLists();
     }
 
     /**
@@ -187,6 +210,7 @@ public final class MainWindow implements Runnable {
                 @Override
                 public void windowDeactivated(WindowEvent e) {
                     refreshLists();
+                    clearFields();
                 }
             });
             this.addWindowListener(new WindowAdapter() {
