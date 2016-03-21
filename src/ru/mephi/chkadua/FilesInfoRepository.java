@@ -73,7 +73,9 @@ public class FilesInfoRepository {
      */
     public FileInfo getFileByName(String category, String filename) {
         for (FileInfo file : filesArrayList) {
-            if (file.getName().equals(filename) && file.getCategory().equals(category)) return file;
+            if ((file.getName().equals(filename)) && (file.getCategory().equals(category))) {
+                return file;
+            }
         }
         return null;
     }
@@ -109,5 +111,11 @@ public class FilesInfoRepository {
     public void removeFile(String category, String filename) {
         FileInfo file = getFileByName(category,filename);
         filesArrayList.remove(file);
+    }
+
+    public void printRepo() {
+        for (FileInfo file : filesArrayList) {
+            System.out.println(file.getCategory() + ":" + file.getName() + ":" + file.getPath());
+        }
     }
 }

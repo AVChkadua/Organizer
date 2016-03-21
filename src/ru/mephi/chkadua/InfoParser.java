@@ -134,6 +134,7 @@ public class InfoParser {
         FileInfo file = getFileInfo(category,oldName);
         deleteFileInfo(category,oldName);
         FileInfo newInfo = new FileInfo(newName,file.getCategory(),file.getPath());
+        addFileInfo(newInfo);
     }
 
     /**
@@ -143,12 +144,12 @@ public class InfoParser {
      * @throws IOException
      */
     public static void deleteFileInfo(String category, String filename) throws IOException {
-        FilesInfoRepository container = FilesInfoRepository.getFilesInfoRepository();
-        FileInfo file = container.getFileByName(category, filename);
+        FilesInfoRepository repo = FilesInfoRepository.getFilesInfoRepository();
+        String filepath = repo.getFileByName(category, filename).getPath();
         JsonObject object = new JsonObject();
         object.addProperty("name", filename);
         object.addProperty("category", category);
-        object.addProperty("path", file.getPath());
+        object.addProperty("path", filepath);
         JsonParser parser = new JsonParser();
         JsonElement jsonElement = parser.parse(new FileReader("categories.txt"));
         JsonArray array = jsonElement.getAsJsonArray();

@@ -75,7 +75,7 @@ public class FileAdder extends JFrame {
      */
     private void addFile() {
         if (!filepath.getText().equals("Выберите файл")) {
-            if (name.getText().equals("") || category.getText().equals("")) {
+            if (name.getText().trim().isEmpty() || category.getText().trim().isEmpty()) {
                 JOptionPane.showMessageDialog(this,"Введите корректные названия материала и категории",
                         "Ошибка",JOptionPane.WARNING_MESSAGE);
             } else {
