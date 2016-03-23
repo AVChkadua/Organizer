@@ -5,7 +5,7 @@ import com.google.gson.stream.JsonReader;
 
 import java.io.*;
 import java.util.ArrayList;
-//TODO добавить переименование категорий
+
 /**
  * Класс, отвечающий за работу с JSON-файлом с информацией о файлах
  * @author Anton_Chkadua
@@ -19,7 +19,7 @@ public class InfoParser {
      * @return Объект с информацией о файле или null, если такой файл не найден
      * @throws IOException
      */
-    public static FileInfo getFileInfo(String categoryName, String filename) throws IOException {
+    private static FileInfo getFileInfo(String categoryName, String filename) throws IOException {
         JsonReader reader = new JsonReader(new FileReader("categories.txt"));
         FileInfo file = null;
         reader.beginArray();
@@ -48,7 +48,7 @@ public class InfoParser {
      * @return Массив объектов с информацией о файле (может быть пустым, если JSON-файл пуст)
      * @throws IOException
      */
-    public static ArrayList<FileInfo> getAllFilesInfo() throws IOException {
+    static ArrayList<FileInfo> getAllFilesInfo() throws IOException {
         JsonReader reader = new JsonReader(new FileReader("categories.txt"));
         ArrayList<FileInfo> filesList = new ArrayList<>();
         reader.beginArray();
@@ -78,7 +78,7 @@ public class InfoParser {
      * категории не найдены)
      * @throws IOException
      */
-    public static ArrayList<FileInfo> getFilesByCategory(String categoryName) throws IOException {
+    private static ArrayList<FileInfo> getFilesByCategory(String categoryName) throws IOException {
         ArrayList<FileInfo> filesList = new ArrayList<>();
         JsonReader reader = new JsonReader(new FileReader("categories.txt"));
         reader.beginArray();
@@ -144,12 +144,11 @@ public class InfoParser {
      * @throws IOException
      */
     public static void deleteFileInfo(String category, String filename) throws IOException {
-        FilesInfoRepository repo = FilesInfoRepository.getFilesInfoRepository();
-        String filepath = repo.getFileByName(category, filename).getPath();
+        FileInfo file = getFileInfo(category, filename);
         JsonObject object = new JsonObject();
         object.addProperty("name", filename);
         object.addProperty("category", category);
-        object.addProperty("path", filepath);
+        object.addProperty("path", file.getPath());
         JsonParser parser = new JsonParser();
         JsonElement jsonElement = parser.parse(new FileReader("categories.txt"));
         JsonArray array = jsonElement.getAsJsonArray();
@@ -161,33 +160,34 @@ public class InfoParser {
     }
 
     /**
-     * Получает список всех категорий
-     * @return Список категорий
+     * Переименовывает категорию во всех файлах из указанной
+     * @param oldName Старое имя категории
+     * @param newName Новое имя категории
      * @throws IOException
      */
-    public static ArrayList<String> getCategoriesList() throws IOException {
-        ArrayList<String> categoriesList = new ArrayList<>();
-        JsonReader reader = new JsonReader(new FileReader("categories.txt"));
-        reader.beginArray();
-        while (reader.hasNext()) {
-            reader.beginObject();
-            reader.nextName();
-            reader.nextString();
-            reader.nextName();
-            String category = reader.nextString();
-            reader.nextName();
-            reader.nextString();
-            reader.endObject();
-            if (!categoriesList.contains(category)) {
-                categoriesList.add(category);
-            }
+    public static void renameCategory(String oldName, String newName) throws IOException {
+        ArrayList<FileInfo> filesFromCategory = getFilesByCategory(oldName);
+        for (FileInfo file : filesFromCategory) {
+            FileInfo newFile = new FileInfo(file.getName(),newName,file.getPath());
+            deleteFileInfo(file.getCategory(),file.getName());
+            addFileInfo(newFile);
         }
-        reader.endArray();
-        return categoriesList;
     }
 
     /**
-     * Создаёт файл "categories.txt", если он не создан
+     * Удаляет все файлы из указанной категории
+     * @param category Название категории
+     * @throws IOException
+     */
+    public static void deleteCategory(String category) throws IOException {
+        ArrayList<FileInfo> filesFromCategory = getFilesByCategory(category);
+        for (FileInfo file : filesFromCategory) {
+            deleteFileInfo(category, file.getName());
+        }
+    }
+
+    /**
+     * Создаёт файл-базу, если он не создан
      * @throws IOException
      */
     public static void createFileIfNotExists() throws IOException {

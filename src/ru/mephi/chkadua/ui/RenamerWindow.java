@@ -6,12 +6,12 @@ import java.awt.*;
 /**
  * Класс окна для переименования файла.
  */
-public class RenamerWindow extends JFrame{
-    protected JTextField oldName = new JTextField();
-    protected JTextField newName = new JTextField();
-    protected JButton renameButton = new JButton();
+class RenamerWindow extends JFrame{
+    JTextField oldName = new JTextField();
+    JTextField newName = new JTextField();
+    JButton renameButton = new JButton();
 
-    public RenamerWindow() {
+    RenamerWindow() {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setTitle("Переименование файла");
         JPanel renamerPanel = new JPanel(new GridLayout(2, 2));
@@ -31,7 +31,7 @@ public class RenamerWindow extends JFrame{
         pack();
     }
 
-    public void clearFields() {
+    void clearFields() {
         oldName.setText("");
         newName.setText("");
     }

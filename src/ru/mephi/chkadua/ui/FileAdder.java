@@ -15,14 +15,14 @@ import java.io.IOException;
  * Класс окна с добавлением материала.
  * @author Anton_Chkadua
  */
-public class FileAdder extends JFrame {
+class FileAdder extends JFrame {
 
     private JTextField name = new JTextField();
     private JTextField category = new JTextField();
     private JTextField filepath = new JTextField();
     private JFileChooser fc = new JFileChooser();
 
-    public FileAdder() {
+    FileAdder() {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         setTitle("Добавление нового материала");
@@ -38,6 +38,8 @@ public class FileAdder extends JFrame {
         fileAdderPanel.add(name);
         fileAdderPanel.add(inputCategory);
         fileAdderPanel.add(category);
+        name.setEditable(false);
+        category.setEditable(false);
 
         JPanel addButtonPanel = new JPanel();
         addButton("Добавить", e -> addFile(), addButtonPanel);
@@ -64,10 +66,12 @@ public class FileAdder extends JFrame {
     /**
      * Сбрасывает значения всех полей в окне добавления файлов
      */
-    protected void clearFields() {
+    void clearFields() {
         filepath.setText("Выберите файл");
         name.setText("");
         category.setText("");
+        name.setEditable(false);
+        category.setEditable(false);
     }
 
     /**
@@ -109,6 +113,8 @@ public class FileAdder extends JFrame {
                 JOptionPane.showMessageDialog(FileAdder.this, "Файл не найден", "Ошибка", JOptionPane.ERROR_MESSAGE);
             } else {
                 filepath.setText(pathname);
+                name.setEditable(true);
+                category.setEditable(true);
             }
         }
     }

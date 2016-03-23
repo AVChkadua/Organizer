@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
-// TODO сделать переименование категорий
+
 /**
  *  Хранилище информации о файлах
  */
@@ -108,14 +108,30 @@ public class FilesInfoRepository {
      * @param category Категория файла
      * @param filename Название файла
      */
-    public void removeFile(String category, String filename) {
+    public void deleteFile(String category, String filename) {
         FileInfo file = getFileByName(category,filename);
         filesArrayList.remove(file);
     }
 
-    public void printRepo() {
+    /**
+     * Меняет название категории в каждом объекте файлов из заданной категории
+     * @param oldName Старое имя категории
+     * @param newName Новое имя категории
+     */
+    public void renameCategory(String oldName, String newName) {
         for (FileInfo file : filesArrayList) {
-            System.out.println(file.getCategory() + ":" + file.getName() + ":" + file.getPath());
+            if (file.getCategory().equals(oldName)) file.setCategory(newName);
+        }
+    }
+
+    /**
+     * Удаляет объекты с информацией всех файлов заданной категории из репозитория
+     * @param category Название категории
+     */
+    public void deleteCategory(String category) {
+        ArrayList<FileInfo> filesFromCategory = getFilesByCategory(category);
+        for (FileInfo file : filesFromCategory) {
+            deleteFile(file.getCategory(),file.getName());
         }
     }
 }

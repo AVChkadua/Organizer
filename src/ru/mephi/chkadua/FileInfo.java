@@ -16,7 +16,7 @@ public class FileInfo {
      * @param category Категория файла
      * @param path Путь к файлу
      */
-    public FileInfo(String name, String category, String path) {
+    FileInfo(String name, String category, String path) {
         this.name = name;
         this.category = category;
         this.path = path;
@@ -49,7 +49,7 @@ public class FileInfo {
      * Получает категорию, к которой относится файл
      * @return Категория файла
      */
-    public String getCategory() {
+    String getCategory() {
         return category;
     }
 
@@ -65,7 +65,7 @@ public class FileInfo {
      * Получает путь к файлу
      * @return Путь к файлу
      */
-    public String getPath() {
+    String getPath() {
         return path;
     }
 
