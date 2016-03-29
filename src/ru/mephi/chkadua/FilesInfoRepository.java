@@ -85,8 +85,9 @@ public class FilesInfoRepository {
      * Следует вызывать при добавлении файла в JSON-файл
      * @param fileInfo Объект с информацией
      */
-    public void addFile(FileInfo fileInfo) {
+    public void addFile(FileInfo fileInfo) throws IOException {
         filesArrayList.add(fileInfo);
+        InfoParser.addFileInfo(fileInfo);
     }
 
     /**
@@ -96,10 +97,16 @@ public class FilesInfoRepository {
      * @param newName Новое имя файла
      */
     public void renameFile(String category, String oldName, String newName) {
+        System.out.println(category);
+        System.out.println(oldName);
         FileInfo file = getFileByName(category,oldName);
-        filesArrayList.remove(file);
-        file.setName(newName);
-        filesArrayList.add(file);
+        if (file == null) {
+            for (FileInfo file1 : filesArrayList) {
+                System.out.println(file1.toString());
+            }
+        } else {
+            file.setName(newName);
+        }
     }
 
     /**
@@ -108,9 +115,10 @@ public class FilesInfoRepository {
      * @param category Категория файла
      * @param filename Название файла
      */
-    public void deleteFile(String category, String filename) {
+    public void deleteFile(String category, String filename) throws IOException {
         FileInfo file = getFileByName(category,filename);
         filesArrayList.remove(file);
+        InfoParser.deleteFileInfo(category, filename);
     }
 
     /**
@@ -128,10 +136,11 @@ public class FilesInfoRepository {
      * Удаляет объекты с информацией всех файлов заданной категории из репозитория
      * @param category Название категории
      */
-    public void deleteCategory(String category) {
+    public void deleteCategory(String category) throws IOException {
         ArrayList<FileInfo> filesFromCategory = getFilesByCategory(category);
         for (FileInfo file : filesFromCategory) {
             deleteFile(file.getCategory(),file.getName());
         }
+        InfoParser.deleteCategory(category);
     }
 }

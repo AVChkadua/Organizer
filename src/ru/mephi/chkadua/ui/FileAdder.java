@@ -2,7 +2,6 @@ package ru.mephi.chkadua.ui;
 
 import ru.mephi.chkadua.FileInfo;
 import ru.mephi.chkadua.FilesInfoRepository;
-import ru.mephi.chkadua.InfoParser;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -89,7 +88,6 @@ class FileAdder extends JFrame {
                 info.setPath(filepath.getText());
                 try {
                     FilesInfoRepository.getFilesInfoRepository().addFile(info);
-                    InfoParser.addFileInfo(info);
                 } catch (IOException e1) {
                     JOptionPane.showMessageDialog(this, "Произошла ошибка.\nПопробуйте снова.",
                             "Ошибка", JOptionPane.ERROR_MESSAGE);

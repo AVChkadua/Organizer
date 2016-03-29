@@ -1,15 +1,19 @@
 package ru.mephi.chkadua.ui;
 
 import ru.mephi.chkadua.FileInfo;
-import ru.mephi.chkadua.FileOpener;
 import ru.mephi.chkadua.FilesInfoRepository;
 import ru.mephi.chkadua.InfoParser;
+import ru.mephi.chkadua.OSOperationsManager;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 
 /**
@@ -90,24 +94,27 @@ public final class MainWindow implements Runnable {
     }
 
     /**
-     * Создаёт JPanel с кнопками
+     * Создаёт JPanel с кнопками и устанавливает обработчики событий
      * @return Панель с кнопками
      */
     private JPanel addButtonsPanel() {
         JPanel buttonsPanel = new JPanel();
-        buttonsPanel.setLayout(new GridLayout(2, 3));
+        buttonsPanel.setLayout(new GridLayout(3, 3));
+        addButton("Переименовать файл...", e -> rename(RenamerWindow.RenamerConstants.FILES_LIST), buttonsPanel);
+        addButton("Удалить файл", e -> delete(filesList), buttonsPanel);
         addButton("Добавить файл...", e -> {
             if (!fileAdder.isShowing()) {
                 fileAdder.setLocationByPlatform(true);
                 fileAdder.setVisible(true);
             }
         }, buttonsPanel);
-        addButton("Переименовать файл...", e -> rename(filesList), buttonsPanel);
-        addButton("Переименовать категорию...", e -> rename(categoriesList), buttonsPanel);
+        addButton("Переименовать на диске",e -> renameOnDisc(),buttonsPanel);
+        addButton("Удалить с диска",e -> deleteFileFromDisc(),buttonsPanel);
         addButton("Открыть", e -> open(), buttonsPanel);
-        addButton("Удалить файл", e -> delete(filesList), buttonsPanel);
+        addButton("Переименовать категорию...",
+                e -> rename(RenamerWindow.RenamerConstants.CATEGORIES_LIST), buttonsPanel);
         addButton("Удалить категорию", e -> delete(categoriesList), buttonsPanel);
-        // addButton("О программе", null, buttonsPanel);
+        addButton("О программе", e -> showAuthorInfo(), buttonsPanel);
         frame.add(buttonsPanel, BorderLayout.SOUTH);
         return buttonsPanel;
     }
@@ -168,7 +175,9 @@ public final class MainWindow implements Runnable {
             categoriesList.setListData(categoriesArray);
             categoriesList.setSelectedValue(selected, true);
         } catch (IOException e1) {
-            JOptionPane.showConfirmDialog(frame,"Ошибка при загрузке списка файлов","Ошибка",
+            JOptionPane.showConfirmDialog(frame,"Ошибка при загрузке списка файлов. Возможно файл со списком " +
+                    "повреждён. Нажмите \"Да\", чтобы создать его заново (к сожалению, вся информация " +
+                    "будет потеряна).","Ошибка",
                     JOptionPane.YES_NO_OPTION);
             System.exit(-1);
         }
@@ -200,50 +209,117 @@ public final class MainWindow implements Runnable {
     }
 
     /**
-     * Переименовывает файл или категорию (в зависимости от того, какой список передаётся на вход)
-     * @param list Список, элемент которого нужно переименовать
+     * Переименовывает файл или категорию
+     * @param constant Константа, определяющая, файл или категория подлежит переименованию
      */
-    private void rename(JList<String> list) {
-        RenamerWindowWithRefresh fileRenamer = new RenamerWindowWithRefresh(list);
+    private void rename(RenamerWindow.RenamerConstants constant) {
+        if ((constant == RenamerWindow.RenamerConstants.FILES_LIST) &&
+                (filesList.getSelectedValue() == null)) {
+            JOptionPane.showMessageDialog(frame,"Выберите файл для переименования.","Ошибка",
+                    JOptionPane.WARNING_MESSAGE);
+        } else if ((constant == RenamerWindow.RenamerConstants.CATEGORIES_LIST) &&
+                (categoriesList.getSelectedValue() == null)) {
+            JOptionPane.showMessageDialog(frame,"Выберите категорию для переименования.","Ошибка",
+                    JOptionPane.WARNING_MESSAGE);
+        } else {
+            RenamerWindowWithRefresh renamer = new RenamerWindowWithRefresh(categoriesList.getSelectedValue(),
+                    constant);
+            if (!renamer.isShowing()) {
+                if (constant == RenamerWindow.RenamerConstants.FILES_LIST) {
+                    renamer.setOldNameText(filesList.getSelectedValue());
+                } else {
+                    renamer.setOldNameText(categoriesList.getSelectedValue());
+                }
+                renamer.setLocationByPlatform(true);
+                renamer.setVisible(true);
+            }
+        }
+    }
+
+    /**
+     * Переименовывает файл на диске
+     */
+    private void renameOnDisc() {
+        RenamerWindowWithRefresh fileRenamer = new RenamerWindowWithRefresh();
         if (!fileRenamer.isShowing()) {
-            fileRenamer.setOldNameText(list.getSelectedValue());
+            FileInfo file = FilesInfoRepository.getFilesInfoRepository().getFileByName(
+                    categoriesList.getSelectedValue(),filesList.getSelectedValue());
+            String oldPath = file.getPath();
+            fileRenamer.setSuffixLabelText(oldPath.substring(oldPath.lastIndexOf(".")));
+            oldPath = oldPath.substring(oldPath.lastIndexOf("\\") + 1, oldPath.lastIndexOf("."));
+            fileRenamer.setOldNameText(oldPath);
             fileRenamer.setLocationByPlatform(true);
             fileRenamer.setVisible(true);
         }
     }
 
     /**
-     * Удаляет информацию о файле из JSON-файла и хранилища
+     * Удаляет информацию о файле или категорию из JSON-файла и хранилища
      */
     private void delete(JList<String> list) {
         if (list == filesList) {
-            try {
-                if (list.getSelectedValue() == null) {
-                    JOptionPane.showMessageDialog(frame, "Выберите файл или категорию для удаления",
-                            "Ошибка", JOptionPane.WARNING_MESSAGE);
-                } else {
-                    repo.deleteFile(categoriesList.getSelectedValue(), filesList.getSelectedValue());
-                    InfoParser.deleteFileInfo(categoriesList.getSelectedValue(), filesList.getSelectedValue());
-                }
-            } catch (IOException e1) {
-                JOptionPane.showMessageDialog(frame, "Ошибка при удалении файла.", "Ошибка",
-                        JOptionPane.ERROR_MESSAGE);
-            }
+            deleteFile(list);
         } else {
-            try {
-                if (list.getSelectedValue() == null) {
-                    JOptionPane.showMessageDialog(frame, "Выберите категорию для удаления",
-                            "Ошибка", JOptionPane.WARNING_MESSAGE);
-                } else {
-                    repo.deleteCategory(list.getSelectedValue());
-                    InfoParser.deleteCategory(list.getSelectedValue());
-                }
-            } catch (IOException e1) {
-                JOptionPane.showMessageDialog(frame, "Ошибка при удалении .", "Ошибка",
-                        JOptionPane.ERROR_MESSAGE);
-            }
+            deleteCategory(list);
         }
         refreshLists();
+    }
+
+    /**
+     * Удаляет категорию из JSON-файла
+     * @param list Список с категориями
+     */
+    private void deleteCategory(JList<String> list) {
+        try {
+            if (list.getSelectedValue() == null) {
+                JOptionPane.showMessageDialog(frame, "Выберите категорию для удаления",
+                        "Ошибка", JOptionPane.WARNING_MESSAGE);
+            } else {
+                repo.deleteCategory(list.getSelectedValue());
+                refreshLists();
+            }
+        } catch (IOException e1) {
+            JOptionPane.showMessageDialog(frame, "Ошибка при удалении.", "Ошибка",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Удаляет файл их JSON-файла
+     * @param list Список с файлами
+     */
+    private void deleteFile(JList<String> list) {
+        try {
+            if (list.getSelectedValue() == null) {
+                JOptionPane.showMessageDialog(frame, "Выберите файл или категорию для удаления.",
+                        "Ошибка", JOptionPane.WARNING_MESSAGE);
+            } else {
+                repo.deleteFile(categoriesList.getSelectedValue(), filesList.getSelectedValue());
+                refreshLists();
+            }
+        } catch (IOException e1) {
+            JOptionPane.showMessageDialog(frame, "Ошибка при удалении файла.", "Ошибка",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Удаляет файл с дивка
+     */
+    private void deleteFileFromDisc() {
+        try {
+            if (filesList.getSelectedValue() == null) {
+                JOptionPane.showMessageDialog(frame, "Выберите файл для удаления.", "Ошибка",
+                        JOptionPane.WARNING_MESSAGE);
+            } else {
+                FileInfo file = repo.getFileByName(categoriesList.getSelectedValue(),filesList.getSelectedValue());
+                OSOperationsManager.deleteFile(file);
+                refreshLists();
+            }
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(frame, "Ошибка при удалении файла с диска.", "Ошибка",
+                    JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     /**
@@ -253,11 +329,40 @@ public final class MainWindow implements Runnable {
         try {
             FileInfo file = FilesInfoRepository.getFilesInfoRepository().getFileByName(
                 categoriesList.getSelectedValue(), filesList.getSelectedValue());
-            FileOpener.openFile(file);
+            OSOperationsManager.openFile(file);
         } catch (IOException e) {
             JOptionPane.showMessageDialog(frame,"Ошибка при открытии файла.","Ошибка",
                     JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    /**
+     * Показывает информацию о программе
+     */
+    private void showAuthorInfo() {
+        JFrame infoFrame = new JFrame("О программе");
+        infoFrame.setLocationByPlatform(true);
+        JLabel info = new JLabel("Органайзер материалов. Автор: А. Чкадуа.\n");
+        JPanel buttonPanel = new JPanel();
+        JButton link = new JButton("Github");
+        infoFrame.add(info,BorderLayout.CENTER);
+        link.addActionListener(e -> {
+            try {
+                Desktop.getDesktop().browse(new URI("https://github.com/AVChkadua"));
+            } catch (IOException e1) {
+                JOptionPane.showMessageDialog(frame,"Ошибка при открытии браузера.","Ошибка",
+                        JOptionPane.ERROR_MESSAGE);
+            } catch (URISyntaxException e1) {
+                JOptionPane.showMessageDialog(frame,"Некорректный URI.","Ошибка",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        buttonPanel.add(link,BorderLayout.CENTER);
+        infoFrame.add(buttonPanel,BorderLayout.SOUTH);
+        info.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        link.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        infoFrame.pack();
+        infoFrame.setVisible(true);
     }
 
     /**
@@ -280,58 +385,19 @@ public final class MainWindow implements Runnable {
      * Класс окна переименования файлов и категорий, при закрытии которого обновляются оба списка
      */
     private class RenamerWindowWithRefresh extends RenamerWindow {
-        RenamerWindowWithRefresh(JList list) {
-            super();
-            renameButton.addActionListener(e -> rename(list));
+        RenamerWindowWithRefresh(String category, RenamerConstants constant) {
+            super(category,constant);
             this.addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowDeactivated(WindowEvent e) {
                     refreshLists();
-                    clearFields();
                 }
             });
         }
 
-        /**
-         * Переименовывает файл или категорию
-         * @param list Список, элемент (категорию или файл) которого нужно переименовать
-         */
-        void rename(JList list) {
-            if (list.getSelectedValue() == null) {
-                JOptionPane.showMessageDialog(frame,"Выберите файл или категорию для переименования",
-                        "Ошибка",JOptionPane.WARNING_MESSAGE);
-            }
-            if (list == filesList) {
-                try {
-                    if (!newName.getText().trim().isEmpty()) {
-                        InfoParser.renameFile(categoriesList.getSelectedValue(), oldName.getText(), newName.getText());
-                        repo.renameFile(categoriesList.getSelectedValue(), oldName.getText(), newName.getText());
-                        setVisible(false);
-                    }
-                } catch (IOException ex) {
-                    JOptionPane.showMessageDialog(frame,"Ошибка при переименовании файла","Ошибка",
-                            JOptionPane.ERROR_MESSAGE);
-                }
-            } else {
-                try {
-                    if (!newName.getText().trim().isEmpty()) {
-                        InfoParser.renameCategory(categoriesList.getSelectedValue(), newName.getText());
-                        repo.renameCategory(categoriesList.getSelectedValue(), newName.getText());
-                        setVisible(false);
-                    }
-                } catch (IOException ex) {
-                    JOptionPane.showMessageDialog(frame,"Ошибка при переименовании категории","Ошибка",
-                            JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        }
-
-        /**
-         * Устанавливает текст в поле со старым названием
-         * @param text Текстовая строка
-         */
-        void setOldNameText(String text) {
-            this.oldName.setText(text);
+        RenamerWindowWithRefresh() {
+            super();
+            renameButton.addActionListener(e -> renameOnDisc(categoriesList, filesList));
         }
     }
 }

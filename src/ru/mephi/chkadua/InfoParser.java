@@ -24,19 +24,11 @@ public class InfoParser {
         FileInfo file = null;
         reader.beginArray();
         while (reader.hasNext()) {
-            reader.beginObject();
-            reader.nextName();
-            String name = reader.nextString();
-            reader.nextName();
-            String category = reader.nextString();
-            reader.nextName();
-            String path = reader.nextString();
-            reader.endObject();
-            if (category.equals(categoryName) && name.equals(filename)) {
-                file = new FileInfo();
-                file.setName(name);
-                file.setCategory(category);
-                file.setPath(path);
+            file = getFileInfo(reader);
+            if (file.getCategory().equals(categoryName) && file.getName().equals(filename)) {
+                while (reader.hasNext()) reader.skipValue();
+                reader.endArray();
+                return file;
             }
         }
         reader.endArray();
@@ -53,22 +45,32 @@ public class InfoParser {
         ArrayList<FileInfo> filesList = new ArrayList<>();
         reader.beginArray();
         while (reader.hasNext()) {
-            reader.beginObject();
-            reader.nextName();
-            String name = reader.nextString();
-            reader.nextName();
-            String category = reader.nextString();
-            reader.nextName();
-            String path = reader.nextString();
-            reader.endObject();
-            FileInfo file = new FileInfo();
-            file.setName(name);
-            file.setCategory(category);
-            file.setPath(path);
-            filesList.add(file);
+            filesList.add(getFileInfo(reader));
         }
         reader.endArray();
         return filesList;
+    }
+
+    /**
+     * Считывает информацию о файле из JSON-файла
+     * @param reader Считыватель, ассоциированный с JSON-файлом
+     * @return Объект с информацией о файле
+     * @throws IOException
+     */
+    private static FileInfo getFileInfo(JsonReader reader) throws IOException {
+        reader.beginObject();
+        reader.nextName();
+        String name = reader.nextString();
+        reader.nextName();
+        String category = reader.nextString();
+        reader.nextName();
+        String path = reader.nextString();
+        reader.endObject();
+        FileInfo file = new FileInfo();
+        file.setName(name);
+        file.setCategory(category);
+        file.setPath(path);
+        return file;
     }
 
     /**
@@ -83,19 +85,8 @@ public class InfoParser {
         JsonReader reader = new JsonReader(new FileReader("categories.txt"));
         reader.beginArray();
         while (reader.hasNext()) {
-            reader.beginObject();
-            reader.nextName();
-            String name = reader.nextString();
-            reader.nextName();
-            String category = reader.nextString();
-            reader.nextName();
-            String path = reader.nextString();
-            reader.endObject();
-            if (category.equals(categoryName)) {
-                FileInfo file = new FileInfo();
-                file.setName(name);
-                file.setCategory(category);
-                file.setPath(path);
+            FileInfo file = getFileInfo(reader);
+            if (file.getCategory().equals(categoryName)) {
                 filesList.add(file);
             }
         }
@@ -108,14 +99,11 @@ public class InfoParser {
      * @param info Объект с информацией о файле
      * @throws IOException
      */
-    public static void addFileInfo(FileInfo info) throws IOException {
+    static void addFileInfo(FileInfo info) throws IOException {
         JsonParser parser = new JsonParser();
+        JsonObject object = createFileInfoJsonObject(info);
         JsonElement jsonElement = parser.parse(new FileReader("categories.txt"));
         JsonArray array = jsonElement.getAsJsonArray();
-        JsonObject object = new JsonObject();
-        object.addProperty("name", info.getName());
-        object.addProperty("category", info.getCategory());
-        object.addProperty("path", info.getPath());
         array.add(object);
         try (Writer writer = new FileWriter("categories.txt")) {
             Gson gson = new GsonBuilder().create();
@@ -143,13 +131,10 @@ public class InfoParser {
      * @param filename Название файла
      * @throws IOException
      */
-    public static void deleteFileInfo(String category, String filename) throws IOException {
+    static void deleteFileInfo(String category, String filename) throws IOException {
         FileInfo file = getFileInfo(category, filename);
-        JsonObject object = new JsonObject();
-        object.addProperty("name", filename);
-        object.addProperty("category", category);
-        object.addProperty("path", file.getPath());
         JsonParser parser = new JsonParser();
+        JsonObject object = createFileInfoJsonObject(file);
         JsonElement jsonElement = parser.parse(new FileReader("categories.txt"));
         JsonArray array = jsonElement.getAsJsonArray();
         array.remove(object);
@@ -157,6 +142,19 @@ public class InfoParser {
             Gson gson = new GsonBuilder().create();
             gson.toJson(array, writer);
         }
+    }
+
+    /**
+     * Создаёт JSON-объект с указанными параметрами
+     * @param file Объект с информацией о файле
+     * @return JSON-объект с информацией
+     */
+    private static JsonObject createFileInfoJsonObject(FileInfo file) {
+        JsonObject object = new JsonObject();
+        object.addProperty("name", file.getName());
+        object.addProperty("category", file.getCategory());
+        object.addProperty("path", file.getPath());
+        return object;
     }
 
     /**
@@ -179,7 +177,7 @@ public class InfoParser {
      * @param category Название категории
      * @throws IOException
      */
-    public static void deleteCategory(String category) throws IOException {
+    static void deleteCategory(String category) throws IOException {
         ArrayList<FileInfo> filesFromCategory = getFilesByCategory(category);
         for (FileInfo file : filesFromCategory) {
             deleteFileInfo(category, file.getName());
@@ -187,7 +185,19 @@ public class InfoParser {
     }
 
     /**
-     * Создаёт файл-базу, если он не создан
+     * Изменяет путь к файлу в JSON-файле
+     * @param category Категория файла
+     * @param name Название файла
+     * @param path Новый путь к файлу
+     * @throws IOException
+     */
+    static void changeFilePath(String category, String name, String path) throws IOException {
+        deleteFileInfo(category,name);
+        addFileInfo(new FileInfo(name,category,path));
+    }
+
+    /**
+     * Создаёт JSON-файл, если он отсутствует
      * @throws IOException
      */
     public static void createFileIfNotExists() throws IOException {

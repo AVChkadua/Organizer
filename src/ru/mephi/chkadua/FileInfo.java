@@ -65,7 +65,7 @@ public class FileInfo {
      * Получает путь к файлу
      * @return Путь к файлу
      */
-    String getPath() {
+    public String getPath() {
         return path;
     }
 
@@ -75,5 +75,10 @@ public class FileInfo {
      */
     public void setPath(String path) {
         this.path = path;
+    }
+
+    @Override
+    public String toString() {
+        return name + ":" + category;
     }
 }
