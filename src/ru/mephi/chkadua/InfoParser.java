@@ -210,6 +210,10 @@ public class InfoParser {
         }
     }
 
+    /**
+     * Очищает JSON-файл
+     * @throws IOException
+     */
     public static void clearDatabaseFile() throws IOException {
         PrintWriter writer = new PrintWriter(new File("categories.txt"));
         writer.print("[]");
