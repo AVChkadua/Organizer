@@ -200,7 +200,7 @@ public class InfoParser {
      * Создаёт JSON-файл, если он отсутствует
      * @throws IOException
      */
-    public static void createFileIfNotExists() throws IOException {
+    public static void createDatabaseFileIfNotExists() throws IOException {
         File file = new File("categories.txt");
         if (file.createNewFile()) {
             try (OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(file))){
@@ -208,5 +208,11 @@ public class InfoParser {
                 out.close();
             }
         }
+    }
+
+    public static void clearDatabaseFile() throws IOException {
+        PrintWriter writer = new PrintWriter(new File("categories.txt"));
+        writer.print("[]");
+        writer.close();
     }
 }

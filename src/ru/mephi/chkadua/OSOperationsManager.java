@@ -3,6 +3,8 @@ package ru.mephi.chkadua;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 
 /**
@@ -29,8 +31,7 @@ public class OSOperationsManager {
         int indexOfLastSeparator = file.getPath().lastIndexOf("\\");
         String newPath = file.getPath().substring(0,indexOfLastSeparator + 1) + newName;
         Files.move(new File(file.getPath()).toPath(), new File(newPath).toPath());
-        InfoParser.changeFilePath(file.getCategory(),file.getName(),newPath);
-        FilesInfoRepository.getFilesInfoRepository().getFileByName(file.getCategory(),file.getName()).setPath(newPath);
+        FilesInfoRepository.getFilesInfoRepository().changeFilePath(file.getCategory(),file.getName(),newPath);
     }
 
     /**
@@ -41,5 +42,14 @@ public class OSOperationsManager {
     public static void deleteFile(FileInfo file) throws IOException {
         Files.delete(new File(file.getPath()).toPath());
         FilesInfoRepository.getFilesInfoRepository().deleteFile(file.getCategory(),file.getName());
+    }
+
+    /**
+     * Открывает Github с проектом
+     * @throws URISyntaxException
+     * @throws IOException
+     */
+    public static void openGithub() throws URISyntaxException, IOException {
+        Desktop.getDesktop().browse(new URI("https://github.com/AVChkadua/Organizer"));
     }
 }

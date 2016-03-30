@@ -97,16 +97,8 @@ public class FilesInfoRepository {
      * @param newName Новое имя файла
      */
     public void renameFile(String category, String oldName, String newName) {
-        System.out.println(category);
-        System.out.println(oldName);
         FileInfo file = getFileByName(category,oldName);
-        if (file == null) {
-            for (FileInfo file1 : filesArrayList) {
-                System.out.println(file1.toString());
-            }
-        } else {
-            file.setName(newName);
-        }
+        file.setName(newName);
     }
 
     /**
@@ -126,10 +118,11 @@ public class FilesInfoRepository {
      * @param oldName Старое имя категории
      * @param newName Новое имя категории
      */
-    public void renameCategory(String oldName, String newName) {
+    public void renameCategory(String oldName, String newName) throws IOException {
         for (FileInfo file : filesArrayList) {
             if (file.getCategory().equals(oldName)) file.setCategory(newName);
         }
+        InfoParser.renameCategory(oldName,newName);
     }
 
     /**
@@ -142,5 +135,17 @@ public class FilesInfoRepository {
             deleteFile(file.getCategory(),file.getName());
         }
         InfoParser.deleteCategory(category);
+    }
+
+    /**
+     * Меняет путь к файлу
+     * @param category Категория файла
+     * @param name Имя файла
+     * @param newPath Новый путь к файлу
+     * @throws IOException
+     */
+    void changeFilePath(String category, String name, String newPath) throws IOException {
+        getFileByName(category,name).setPath(newPath);
+        InfoParser.changeFilePath(category,name,newPath);
     }
 }
