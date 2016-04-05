@@ -11,6 +11,7 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -179,7 +180,6 @@ public final class MainWindow implements Runnable {
                     showErrorMessage("Ошибка при создании файла со списком файлов.",JOptionPane.ERROR_MESSAGE);
                 }
             }
-            System.exit(-1);
         }
         String[] categoriesArray = new String[repo.getCategoriesNames().size()];
         categoriesArray = repo.getCategoriesNames().toArray(categoriesArray);
@@ -338,9 +338,21 @@ public final class MainWindow implements Runnable {
             showErrorMessage("Выберите файл для открытия.", JOptionPane.WARNING_MESSAGE);
         } else {
             try {
-                FileInfo file = FilesInfoRepository.getFilesInfoRepository().getFileByName(
-                        categoriesList.getSelectedValue(), filesList.getSelectedValue());
+                FileInfo file = repo.getFileByName(categoriesList.getSelectedValue(), filesList.getSelectedValue());
                 OSOperationsManager.openFile(file);
+            } catch (FileNotFoundException e) {
+                String[] options = {"Да","Нет"};
+                int answer = JOptionPane.showOptionDialog(frame,"Файл не найден.\nУдалить информацию о нём из базы?",
+                        "Ошибка",JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
+                        null, options, options[0]);
+                if (answer == JOptionPane.YES_OPTION) {
+                    try {
+                        repo.deleteFile(categoriesList.getSelectedValue(),filesList.getSelectedValue());
+                    } catch (IOException e1) {
+                        showErrorMessage("Ошибка при удалении информации из базы",JOptionPane.ERROR_MESSAGE);
+                    }
+                    refreshLists();
+                }
             } catch (IOException e) {
                 showErrorMessage("Ошибка при открытии файла.", JOptionPane.ERROR_MESSAGE);
             }

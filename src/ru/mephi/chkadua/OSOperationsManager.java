@@ -2,6 +2,7 @@ package ru.mephi.chkadua;
 
 import java.awt.*;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -18,7 +19,11 @@ public class OSOperationsManager {
      * @throws IOException
      */
     public static void openFile(FileInfo fileInfo) throws IOException {
-        Desktop.getDesktop().open(new File(fileInfo.getPath()));
+        File file = new File(fileInfo.getPath());
+        if (file.exists() && file.isFile())
+            Desktop.getDesktop().open(file);
+        else
+            throw new FileNotFoundException();
     }
 
     /**

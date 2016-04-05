@@ -79,8 +79,7 @@ class FileAdder extends JFrame {
     private void addFile() {
         if (!filepath.getText().equals("Выберите файл")) {
             if (name.getText().trim().isEmpty() || category.getText().trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this,"Введите корректные названия материала и категории",
-                        "Ошибка",JOptionPane.WARNING_MESSAGE);
+                showErrorDialog("Введите корректные названия материала и категории", JOptionPane.WARNING_MESSAGE);
             } else {
                 FileInfo info = new FileInfo();
                 info.setName(name.getText());
@@ -89,14 +88,25 @@ class FileAdder extends JFrame {
                 try {
                     FilesInfoRepository.getFilesInfoRepository().addFile(info);
                 } catch (IOException e1) {
-                    JOptionPane.showMessageDialog(this, "Произошла ошибка.\nПопробуйте снова.",
-                            "Ошибка", JOptionPane.ERROR_MESSAGE);
+                    showErrorDialog("Произошла ошибка.\nПопробуйте снова.", JOptionPane.ERROR_MESSAGE);
+                } catch (IllegalArgumentException e) {
+                    showErrorDialog("Указанный файл был добавлен ранее.", JOptionPane.WARNING_MESSAGE);
                 }
                 FileAdder.this.setVisible(false);
             }
         } else {
-            JOptionPane.showMessageDialog(this,"Файл не выбран","Ошибка",JOptionPane.WARNING_MESSAGE);
+            showErrorDialog("Файл не выбран", JOptionPane.WARNING_MESSAGE);
         }
+    }
+
+    /**
+     * Выводит сообщение об ошибке
+     * @param message Сообщение
+     * @param warningMessage Константа JOptionPane
+     */
+    private void showErrorDialog(String message, int warningMessage) {
+        JOptionPane.showMessageDialog(this, message,
+                "Ошибка", warningMessage);
     }
 
     /**
@@ -108,7 +118,7 @@ class FileAdder extends JFrame {
             String pathname = fc.getSelectedFile().getAbsolutePath();
             File f = new File(pathname);
             if (!f.exists()) {
-                JOptionPane.showMessageDialog(FileAdder.this, "Файл не найден", "Ошибка", JOptionPane.ERROR_MESSAGE);
+                showErrorDialog("Файл не найден", JOptionPane.ERROR_MESSAGE);
             } else {
                 filepath.setText(pathname);
                 name.setEditable(true);

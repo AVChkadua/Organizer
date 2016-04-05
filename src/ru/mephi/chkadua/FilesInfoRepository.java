@@ -81,22 +81,28 @@ public class FilesInfoRepository {
     }
 
     /**
-     * Добавляет информацию о файле в хранилище
-     * Следует вызывать при добавлении файла в JSON-файл
+     * Добавляет информацию о файле в хранилище и JSON-файл
      * @param fileInfo Объект с информацией
+     * @return true, если файл был добавлен, false иначе
      */
-    public void addFile(FileInfo fileInfo) throws IOException {
-        filesArrayList.add(fileInfo);
-        InfoParser.addFileInfo(fileInfo);
+    public boolean addFile(FileInfo fileInfo) throws IOException {
+        if (!filesArrayList.contains(fileInfo)) {
+            filesArrayList.add(fileInfo);
+            InfoParser.addFileInfo(fileInfo);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
-     * Изменяет имя файла в хранилиище
+     * Изменяет имя файла в хранилище и JSON-файле
      * @param category Категория файла
      * @param oldName Старое имя файла
      * @param newName Новое имя файла
      */
-    public void renameFile(String category, String oldName, String newName) {
+    public void renameFile(String category, String oldName, String newName) throws IOException {
+        InfoParser.renameFile(category, oldName, newName);
         FileInfo file = getFileByName(category,oldName);
         file.setName(newName);
     }
@@ -108,9 +114,9 @@ public class FilesInfoRepository {
      * @param filename Название файла
      */
     public void deleteFile(String category, String filename) throws IOException {
+        InfoParser.deleteFileInfo(category, filename);
         FileInfo file = getFileByName(category,filename);
         filesArrayList.remove(file);
-        InfoParser.deleteFileInfo(category, filename);
     }
 
     /**
@@ -119,10 +125,10 @@ public class FilesInfoRepository {
      * @param newName Новое имя категории
      */
     public void renameCategory(String oldName, String newName) throws IOException {
+        InfoParser.renameCategory(oldName,newName);
         for (FileInfo file : filesArrayList) {
             if (file.getCategory().equals(oldName)) file.setCategory(newName);
         }
-        InfoParser.renameCategory(oldName,newName);
     }
 
     /**
@@ -130,11 +136,11 @@ public class FilesInfoRepository {
      * @param category Название категории
      */
     public void deleteCategory(String category) throws IOException {
+        InfoParser.deleteCategory(category);
         ArrayList<FileInfo> filesFromCategory = getFilesByCategory(category);
         for (FileInfo file : filesFromCategory) {
             deleteFile(file.getCategory(),file.getName());
         }
-        InfoParser.deleteCategory(category);
     }
 
     /**
@@ -145,7 +151,7 @@ public class FilesInfoRepository {
      * @throws IOException
      */
     void changeFilePath(String category, String name, String newPath) throws IOException {
-        getFileByName(category,name).setPath(newPath);
         InfoParser.changeFilePath(category,name,newPath);
+        getFileByName(category,name).setPath(newPath);
     }
 }

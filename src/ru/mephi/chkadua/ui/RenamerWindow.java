@@ -89,8 +89,7 @@ class RenamerWindow extends JFrame{
      */
     private void rename(String category, RenamerConstants constant) {
         if (category == null) {
-            JOptionPane.showMessageDialog(this,"Выберите файл или категорию для переименования.",
-                    "Ошибка",JOptionPane.WARNING_MESSAGE);
+            showErrorMessage("Выберите файл или категорию для переименования.", JOptionPane.WARNING_MESSAGE);
         }
         if (constant == RenamerConstants.FILES_LIST) {
             renameFile(category);
@@ -114,8 +113,7 @@ class RenamerWindow extends JFrame{
                 setVisible(false);
             }
         } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this,"Ошибка при переименовании категории.","Ошибка",
-                    JOptionPane.ERROR_MESSAGE);
+            showErrorMessage("Ошибка при переименовании категории.", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -126,14 +124,12 @@ class RenamerWindow extends JFrame{
     private void renameFile(String category) {
         try {
             if (!newName.getText().trim().isEmpty()) {
-                InfoParser.renameFile(category, oldName.getText(), newName.getText());
                 FilesInfoRepository.getFilesInfoRepository().
                         renameFile(category, oldName.getText(), newName.getText());
                 setVisible(false);
             }
         } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this,"Ошибка при переименовании файла.","Ошибка",
-                    JOptionPane.ERROR_MESSAGE);
+            showErrorMessage("Ошибка при переименовании файла.", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -152,13 +148,21 @@ class RenamerWindow extends JFrame{
                 this.setVisible(false);
             }
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(this,"Ошибка при переименовании файла.","Ошибка",
-                    JOptionPane.ERROR_MESSAGE);
+            showErrorMessage("Ошибка при переименовании файла.", JOptionPane.ERROR_MESSAGE);
         } catch (InvalidPathException e) {
-            JOptionPane.showMessageDialog(this,"Новое имя файла содержит недопустимые символы.","Ошибка",
-                    JOptionPane.WARNING_MESSAGE);
+            showErrorMessage("Новое имя файла содержит недопустимые символы.", JOptionPane.WARNING_MESSAGE);
 
         }
+    }
+
+    /**
+     * Выводит сообщение об ошибке
+     * @param message Выводимое сообщение
+     * @param warningMessage Константа JOptionPane
+     */
+    private void showErrorMessage(String message, int warningMessage) {
+        JOptionPane.showMessageDialog(this, message, "Ошибка",
+                warningMessage);
     }
 
     /**
