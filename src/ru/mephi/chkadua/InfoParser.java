@@ -36,22 +36,6 @@ public class InfoParser {
     }
 
     /**
-     * Получает информацию обо всех файлах из JSON-файла
-     * @return Массив объектов с информацией о файле (может быть пустым, если JSON-файл пуст)
-     * @throws IOException
-     */
-    static ArrayList<FileInfo> getAllFilesInfo() throws IOException {
-        JsonReader reader = new JsonReader(new FileReader("categories.txt"));
-        ArrayList<FileInfo> filesList = new ArrayList<>();
-        reader.beginArray();
-        while (reader.hasNext()) {
-            filesList.add(getFileInfo(reader));
-        }
-        reader.endArray();
-        return filesList;
-    }
-
-    /**
      * Считывает информацию о файле из JSON-файла
      * @param reader Считыватель, ассоциированный с JSON-файлом
      * @return Объект с информацией о файле
@@ -71,6 +55,22 @@ public class InfoParser {
         file.setCategory(category);
         file.setPath(path);
         return file;
+    }
+
+    /**
+     * Получает информацию обо всех файлах из JSON-файла
+     * @return Массив объектов с информацией о файле (может быть пустым, если JSON-файл пуст)
+     * @throws IOException
+     */
+    static ArrayList<FileInfo> getAllFilesInfo() throws IOException {
+        JsonReader reader = new JsonReader(new FileReader("categories.txt"));
+        ArrayList<FileInfo> filesList = new ArrayList<>();
+        reader.beginArray();
+        while (reader.hasNext()) {
+            filesList.add(getFileInfo(reader));
+        }
+        reader.endArray();
+        return filesList;
     }
 
     /**
@@ -203,10 +203,7 @@ public class InfoParser {
     public static void createDatabaseFileIfNotExists() throws IOException {
         File file = new File("categories.txt");
         if (file.createNewFile()) {
-            try (OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(file))){
-                out.write("[]");
-                out.close();
-            }
+            clearDatabaseFile();
         }
     }
 
@@ -215,8 +212,9 @@ public class InfoParser {
      * @throws IOException
      */
     public static void clearDatabaseFile() throws IOException {
-        PrintWriter writer = new PrintWriter(new File("categories.txt"));
-        writer.print("[]");
-        writer.close();
+        try (PrintWriter writer = new PrintWriter(new File("categories.txt"))) {
+            writer.print("[]");
+            writer.close();
+        }
     }
 }

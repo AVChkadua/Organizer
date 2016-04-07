@@ -74,6 +74,16 @@ class FileAdder extends JFrame {
     }
 
     /**
+     * Выводит сообщение об ошибке
+     * @param message Сообщение
+     * @param warningMessage Константа JOptionPane
+     */
+    private void showMessage(String message, int warningMessage) {
+        JOptionPane.showMessageDialog(this, message,
+                "Ошибка", warningMessage);
+    }
+
+    /**
      * Добавляет информацию о файле в JSON-файл
      */
     private void addFile() {
@@ -86,7 +96,7 @@ class FileAdder extends JFrame {
                 info.setCategory(category.getText());
                 info.setPath(filepath.getText());
                 try {
-                    if (!FilesInfoRepository.getFilesInfoRepository().addFile(info)) {
+                    if (!FilesInfoRepository.getInstance().addFile(info)) {
                         showMessage("Указанный файл уже добавлен", JOptionPane.WARNING_MESSAGE);
                     } else {
                         clearFields();
@@ -99,16 +109,6 @@ class FileAdder extends JFrame {
         } else {
             showMessage("Файл не выбран", JOptionPane.WARNING_MESSAGE);
         }
-    }
-
-    /**
-     * Выводит сообщение об ошибке
-     * @param message Сообщение
-     * @param warningMessage Константа JOptionPane
-     */
-    private void showMessage(String message, int warningMessage) {
-        JOptionPane.showMessageDialog(this, message,
-                "Ошибка", warningMessage);
     }
 
     /**

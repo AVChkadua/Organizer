@@ -29,14 +29,14 @@ public final class MainWindow implements Runnable {
     private JList<String> filesList;
     private JFrame frame;
     private final FileAdderWithRefresh fileAdder = new FileAdderWithRefresh();
-    private final FilesInfoRepository repo = FilesInfoRepository.getFilesInfoRepository();
+    private final FilesInfoRepository repo = FilesInfoRepository.getInstance();
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new MainWindow());
     }
 
     public void run() {
-        frame = new JFrame("Органайзер материалов");
+        frame = new JFrame("Органайзер");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.add(new JLabel());
         frame.setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
@@ -108,7 +108,7 @@ public final class MainWindow implements Runnable {
                 fileAdder.setVisible(true);
             }
         }, buttonsPanel);
-        addButton("Переименовать на диске",e -> renameOnDisc(),buttonsPanel);
+        addButton("Переименовать на диске...",e -> renameOnDisc(),buttonsPanel);
         addButton("Удалить с диска",e -> deleteFileFromDisc(),buttonsPanel);
         addButton("Открыть", e -> open(), buttonsPanel);
         addButton("Переименовать категорию...",
@@ -213,6 +213,16 @@ public final class MainWindow implements Runnable {
     }
 
     /**
+     * Выводит сообщение с ошибкой
+     * @param message Сообщение
+     * @param messageType Тип сообщения
+     */
+    private void showMessage(String message, int messageType) {
+        JOptionPane.showMessageDialog(frame, message,
+                "Ошибка", messageType);
+    }
+
+    /**
      * Переименовывает файл или категорию
      * @param constant Константа, определяющая, файл или категория подлежит переименованию
      */
@@ -285,16 +295,6 @@ public final class MainWindow implements Runnable {
     }
 
     /**
-     * Выводит сообщение с ошибкой
-     * @param message Сообщение
-     * @param messageType Тип сообщения
-     */
-    private void showMessage(String message, int messageType) {
-        JOptionPane.showMessageDialog(frame, message,
-                "Ошибка", messageType);
-    }
-
-    /**
      * Удаляет файл их JSON-файла
      */
     private void deleteFile() {
@@ -336,24 +336,6 @@ public final class MainWindow implements Runnable {
     }
 
     /**
-     * Открывает файл в стандартной программе для его просмотра
-     */
-    private void open() {
-        if (filesList.getSelectedValue() == null) {
-            showMessage("Выберите файл для открытия.", JOptionPane.WARNING_MESSAGE);
-        } else {
-            try {
-                FileInfo file = repo.getFileByName(categoriesList.getSelectedValue(), filesList.getSelectedValue());
-                OSOperationsManager.openFile(file);
-            } catch (FileNotFoundException e) {
-                deleteFileInfoIfNotFound();
-            } catch (IOException e) {
-                showMessage("Ошибка при открытии файла.", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-
-    /**
      * Удаляет информацию о файле, если он не найден на диске
      */
     private void deleteFileInfoIfNotFound() {
@@ -368,6 +350,24 @@ public final class MainWindow implements Runnable {
                 showMessage("Ошибка при удалении информации из базы",JOptionPane.ERROR_MESSAGE);
             }
             refreshLists();
+        }
+    }
+
+    /**
+     * Открывает файл в стандартной программе для его просмотра
+     */
+    private void open() {
+        if (filesList.getSelectedValue() == null) {
+            showMessage("Выберите файл для открытия.", JOptionPane.WARNING_MESSAGE);
+        } else {
+            try {
+                FileInfo file = repo.getFileByName(categoriesList.getSelectedValue(), filesList.getSelectedValue());
+                OSOperationsManager.openFile(file);
+            } catch (FileNotFoundException e) {
+                deleteFileInfoIfNotFound();
+            } catch (IOException e) {
+                showMessage("Ошибка при открытии файла.", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 

@@ -20,7 +20,7 @@ class RenamerWindow extends JFrame{
     JButton renameButton = new JButton();
     private static final int DEFAULT_WIDTH = 300;
     private static final int DEFAULT_HEIGHT = 100;
-    private final FilesInfoRepository repo = FilesInfoRepository.getFilesInfoRepository();
+    private final FilesInfoRepository repo = FilesInfoRepository.getInstance();
 
     enum RenamerConstants {FILES_LIST, CATEGORIES_LIST}
 

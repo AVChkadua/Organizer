@@ -20,7 +20,7 @@ public class FilesInfoRepository {
      * Возвращает объект контейнера или создаёт его, если он ещё не создан
      * @return Объект контейнера
      */
-    public static FilesInfoRepository getFilesInfoRepository() {
+    public static FilesInfoRepository getInstance() {
         if (instance == null) {
             instance = new FilesInfoRepository();
         }

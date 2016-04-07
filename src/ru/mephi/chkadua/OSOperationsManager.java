@@ -13,7 +13,7 @@ import java.nio.file.Files;
  */
 public class OSOperationsManager {
 
-    private static final FilesInfoRepository repo = FilesInfoRepository.getFilesInfoRepository();
+    private static final FilesInfoRepository repo = FilesInfoRepository.getInstance();
 
     /**
      * Открывает файл в стандартной программе просмотра, ассоциированной с данным форматом
