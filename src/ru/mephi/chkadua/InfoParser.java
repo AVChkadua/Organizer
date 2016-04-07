@@ -118,7 +118,7 @@ public class InfoParser {
      * @param newName Новое имя файла
      * @throws IOException
      */
-    public static void renameFile(String category, String oldName, String newName) throws IOException {
+    static void renameFile(String category, String oldName, String newName) throws IOException {
         FileInfo file = getFileInfo(category,oldName);
         deleteFileInfo(category,oldName);
         FileInfo newInfo = new FileInfo(newName,file.getCategory(),file.getPath());
@@ -163,7 +163,7 @@ public class InfoParser {
      * @param newName Новое имя категории
      * @throws IOException
      */
-    public static void renameCategory(String oldName, String newName) throws IOException {
+    static void renameCategory(String oldName, String newName) throws IOException {
         ArrayList<FileInfo> filesFromCategory = getFilesByCategory(oldName);
         for (FileInfo file : filesFromCategory) {
             FileInfo newFile = new FileInfo(file.getName(),newName,file.getPath());

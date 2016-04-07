@@ -81,12 +81,27 @@ public class FilesInfoRepository {
     }
 
     /**
-     * Добавляет информацию о файле в хранилище и JSON-файл
+     * Добавляет информацию о файле в хранилище и JSON-файл с проверкой: если файл с указанной категорией и путём
+     * уже добавлен, то добавление отменяется. Если совпало только имя, к нему добавляется суффикс
      * @param fileInfo Объект с информацией
      * @return true, если файл был добавлен, false иначе
+     * @throws IOException
      */
     public boolean addFile(FileInfo fileInfo) throws IOException {
-        if (!filesArrayList.contains(fileInfo)) {
+        boolean alreadyAdded = false;
+        for (FileInfo file : filesArrayList) {
+            if (fileInfo.getCategory().equals(file.getCategory()) && fileInfo.getPath().equals(file.getPath())) {
+                alreadyAdded = true;
+                break;
+            }
+        }
+        if (!alreadyAdded) {
+            String suffix = "";
+            int i = 1;
+            while (getFileByName(fileInfo.getCategory(),fileInfo.getName() + suffix) != null) {
+                suffix = " (" + i++ + ")";
+            }
+            fileInfo.setName(fileInfo.getName() + suffix);
             filesArrayList.add(fileInfo);
             InfoParser.addFileInfo(fileInfo);
             return true;
@@ -100,11 +115,18 @@ public class FilesInfoRepository {
      * @param category Категория файла
      * @param oldName Старое имя файла
      * @param newName Новое имя файла
+     * @throws IOException
+     * @throws IllegalArgumentException
      */
-    public void renameFile(String category, String oldName, String newName) throws IOException {
-        InfoParser.renameFile(category, oldName, newName);
-        FileInfo file = getFileByName(category,oldName);
-        file.setName(newName);
+    public void renameFile(String category, String oldName, String newName)
+            throws IOException, IllegalArgumentException {
+        if (getFileByName(category,newName) != null) {
+            throw new IllegalArgumentException();
+        } else {
+            InfoParser.renameFile(category, oldName, newName);
+            FileInfo file = getFileByName(category, oldName);
+            file.setName(newName);
+        }
     }
 
     /**
@@ -112,6 +134,7 @@ public class FilesInfoRepository {
      * Следует вызывать при удалении файла из JSON-файла
      * @param category Категория файла
      * @param filename Название файла
+     * @throws IOException
      */
     public void deleteFile(String category, String filename) throws IOException {
         InfoParser.deleteFileInfo(category, filename);
@@ -123,24 +146,31 @@ public class FilesInfoRepository {
      * Меняет название категории в каждом объекте файлов из заданной категории
      * @param oldName Старое имя категории
      * @param newName Новое имя категории
+     * @throws IOException
+     * @throws IllegalArgumentException
      */
-    public void renameCategory(String oldName, String newName) throws IOException {
-        InfoParser.renameCategory(oldName,newName);
-        for (FileInfo file : filesArrayList) {
-            if (file.getCategory().equals(oldName)) file.setCategory(newName);
+    public void renameCategory(String oldName, String newName) throws IOException, IllegalArgumentException {
+        if (getCategoriesNames().contains(newName)) {
+            throw new IllegalArgumentException();
+        } else {
+            InfoParser.renameCategory(oldName, newName);
+            for (FileInfo file : filesArrayList) {
+                if (file.getCategory().equals(oldName)) file.setCategory(newName);
+            }
         }
     }
 
     /**
      * Удаляет объекты с информацией всех файлов заданной категории из репозитория
      * @param category Название категории
+     * @throws IOException
      */
     public void deleteCategory(String category) throws IOException {
-        InfoParser.deleteCategory(category);
         ArrayList<FileInfo> filesFromCategory = getFilesByCategory(category);
         for (FileInfo file : filesFromCategory) {
             deleteFile(file.getCategory(),file.getName());
         }
+        InfoParser.deleteCategory(category);
     }
 
     /**

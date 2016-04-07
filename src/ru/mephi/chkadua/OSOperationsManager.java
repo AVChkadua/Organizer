@@ -13,6 +13,8 @@ import java.nio.file.Files;
  */
 public class OSOperationsManager {
 
+    private static final FilesInfoRepository repo = FilesInfoRepository.getFilesInfoRepository();
+
     /**
      * Открывает файл в стандартной программе просмотра, ассоциированной с данным форматом
      * @param fileInfo Объект с информацией о файле
@@ -28,25 +30,36 @@ public class OSOperationsManager {
 
     /**
      * Переименовывает файл на диске и обновляет информацию в JSON-файле и репозитории
-     * @param file Объект с информацией о файле
+     * @param fileInfo Объект с информацией о файле
      * @param newName Новое название файла (не включает в себя путь к файлу)
      * @throws IOException
      */
-    public static void renameFile(FileInfo file, String newName) throws IOException {
-        int indexOfLastSeparator = file.getPath().lastIndexOf("\\");
-        String newPath = file.getPath().substring(0,indexOfLastSeparator + 1) + newName;
-        Files.move(new File(file.getPath()).toPath(), new File(newPath).toPath());
-        FilesInfoRepository.getFilesInfoRepository().changeFilePath(file.getCategory(),file.getName(),newPath);
+    public static void renameFile(FileInfo fileInfo, String newName)
+            throws IOException {
+        File file = new File(fileInfo.getPath());
+        if (file.exists() && file.isFile()) {
+            int indexOfLastSeparator = fileInfo.getPath().lastIndexOf("\\");
+            String newPath = fileInfo.getPath().substring(0, indexOfLastSeparator + 1) + newName;
+            Files.move(new File(fileInfo.getPath()).toPath(), new File(newPath).toPath());
+            repo.changeFilePath(fileInfo.getCategory(), fileInfo.getName(), newPath);
+        } else {
+            throw new FileNotFoundException();
+        }
     }
 
     /**
      * Удаляет файл с диска
-     * @param file Объект с информацией о файле
+     * @param fileInfo Объект с информацией о файле
      * @throws IOException
      */
-    public static void deleteFile(FileInfo file) throws IOException {
-        Files.delete(new File(file.getPath()).toPath());
-        FilesInfoRepository.getFilesInfoRepository().deleteFile(file.getCategory(),file.getName());
+    public static void deleteFile(FileInfo fileInfo) throws IOException {
+        File file = new File(fileInfo.getPath());
+        if (file.exists() && file.isFile()) {
+            Files.delete(new File(fileInfo.getPath()).toPath());
+            repo.deleteFile(fileInfo.getCategory(), fileInfo.getName());
+        } else {
+            throw new FileNotFoundException();
+        }
     }
 
     /**

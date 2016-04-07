@@ -126,7 +126,7 @@ public final class MainWindow implements Runnable {
         try {
             InfoParser.createDatabaseFileIfNotExists();
         } catch (IOException e) {
-            showErrorMessage("Ошибка при создании файла со списком файлов.", JOptionPane.ERROR_MESSAGE);
+            showMessage("Ошибка при создании файла со списком файлов.", JOptionPane.ERROR_MESSAGE);
             System.exit(-1);
         }
     }
@@ -177,7 +177,7 @@ public final class MainWindow implements Runnable {
                 try {
                     InfoParser.clearDatabaseFile();
                 } catch (IOException e) {
-                    showErrorMessage("Ошибка при создании файла со списком файлов.",JOptionPane.ERROR_MESSAGE);
+                    showMessage("Ошибка при создании файла со списком файлов.",JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
@@ -219,10 +219,10 @@ public final class MainWindow implements Runnable {
     private void rename(RenamerWindow.RenamerConstants constant) {
         if ((constant == RenamerWindow.RenamerConstants.FILES_LIST) &&
                 (filesList.getSelectedValue() == null)) {
-            showErrorMessage("Выберите файл для переименования.", JOptionPane.WARNING_MESSAGE);
+            showMessage("Выберите файл для переименования.", JOptionPane.WARNING_MESSAGE);
         } else if ((constant == RenamerWindow.RenamerConstants.CATEGORIES_LIST) &&
                 (categoriesList.getSelectedValue() == null)) {
-            showErrorMessage("Выберите категорию для переименования.", JOptionPane.WARNING_MESSAGE);
+            showMessage("Выберите категорию для переименования.", JOptionPane.WARNING_MESSAGE);
         } else {
             RenamerWindowWithRefresh renamer = new RenamerWindowWithRefresh(categoriesList.getSelectedValue(),
                     constant);
@@ -244,10 +244,9 @@ public final class MainWindow implements Runnable {
     private void renameOnDisc() {
         RenamerWindowWithRefresh fileRenamer = new RenamerWindowWithRefresh();
         if (filesList.getSelectedValue() == null) {
-            showErrorMessage("Выберите файл для переименования.", JOptionPane.WARNING_MESSAGE);
+            showMessage("Выберите файл для переименования.", JOptionPane.WARNING_MESSAGE);
         } else if (!fileRenamer.isShowing()) {
-            FileInfo file = FilesInfoRepository.getFilesInfoRepository().getFileByName(
-                    categoriesList.getSelectedValue(), filesList.getSelectedValue());
+            FileInfo file = repo.getFileByName(categoriesList.getSelectedValue(), filesList.getSelectedValue());
             String oldPath = file.getPath();
             fileRenamer.setSuffixLabelText(oldPath.substring(oldPath.lastIndexOf(".")));
             oldPath = oldPath.substring(oldPath.lastIndexOf("\\") + 1, oldPath.lastIndexOf("."));
@@ -262,27 +261,26 @@ public final class MainWindow implements Runnable {
      */
     private void delete(JList<String> list) {
         if (list == filesList) {
-            deleteFile(list);
+            deleteFile();
         } else {
-            deleteCategory(list);
+            deleteCategory();
         }
         refreshLists();
     }
 
     /**
      * Удаляет категорию из JSON-файла
-     * @param list Список с категориями
      */
-    private void deleteCategory(JList<String> list) {
+    private void deleteCategory() {
         try {
-            if (list.getSelectedValue() == null) {
-                showErrorMessage("Выберите категорию для удаления.", JOptionPane.WARNING_MESSAGE);
+            if (categoriesList.getSelectedValue() == null) {
+                showMessage("Выберите категорию для удаления.", JOptionPane.WARNING_MESSAGE);
             } else {
-                repo.deleteCategory(list.getSelectedValue());
+                repo.deleteCategory(categoriesList.getSelectedValue());
                 refreshLists();
             }
         } catch (IOException e1) {
-            showErrorMessage("Ошибка при удалении категории.", JOptionPane.ERROR_MESSAGE);
+            showMessage("Ошибка при удалении категории.", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -291,25 +289,24 @@ public final class MainWindow implements Runnable {
      * @param message Сообщение
      * @param messageType Тип сообщения
      */
-    private void showErrorMessage(String message, int messageType) {
+    private void showMessage(String message, int messageType) {
         JOptionPane.showMessageDialog(frame, message,
                 "Ошибка", messageType);
     }
 
     /**
      * Удаляет файл их JSON-файла
-     * @param list Список с файлами
      */
-    private void deleteFile(JList<String> list) {
+    private void deleteFile() {
         try {
-            if (list.getSelectedValue() == null) {
-                showErrorMessage("Выберите файл или категорию для удаления.", JOptionPane.WARNING_MESSAGE);
+            if (filesList.getSelectedValue() == null) {
+                showMessage("Выберите файл для удаления.", JOptionPane.WARNING_MESSAGE);
             } else {
                 repo.deleteFile(categoriesList.getSelectedValue(), filesList.getSelectedValue());
                 refreshLists();
             }
         } catch (IOException e1) {
-            showErrorMessage("Ошибка при удалении файла.", JOptionPane.ERROR_MESSAGE);
+            showMessage("Ошибка при удалении файла.", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -317,16 +314,24 @@ public final class MainWindow implements Runnable {
      * Удаляет файл с дивка
      */
     private void deleteFileFromDisc() {
-        try {
-            if (filesList.getSelectedValue() == null) {
-                showErrorMessage("Выберите файл для удаления.", JOptionPane.WARNING_MESSAGE);
-            } else {
-                FileInfo file = repo.getFileByName(categoriesList.getSelectedValue(),filesList.getSelectedValue());
-                OSOperationsManager.deleteFile(file);
+        if (filesList.getSelectedValue() == null) {
+            showMessage("Выберите файл для удаления.", JOptionPane.WARNING_MESSAGE);
+        } else {
+            String[] options = {"Да", "Нет"};
+            int reply = JOptionPane.showOptionDialog(frame, "Вы действительно хотите удалить файл с диска?",
+                    "Подтверждение удаления", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
+                    null, options, options[1]);
+            if (reply == JOptionPane.YES_OPTION) {
+                try {
+                    FileInfo file = repo.getFileByName(categoriesList.getSelectedValue(), filesList.getSelectedValue());
+                    OSOperationsManager.deleteFile(file);
+                } catch (FileNotFoundException e) {
+                    deleteFileInfoIfNotFound();
+                } catch (IOException e) {
+                    showMessage("Ошибка при удалении файла с диска.", JOptionPane.ERROR_MESSAGE);
+                }
                 refreshLists();
             }
-        } catch (IOException e) {
-            showErrorMessage("Ошибка при удалении файла с диска.", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -335,27 +340,34 @@ public final class MainWindow implements Runnable {
      */
     private void open() {
         if (filesList.getSelectedValue() == null) {
-            showErrorMessage("Выберите файл для открытия.", JOptionPane.WARNING_MESSAGE);
+            showMessage("Выберите файл для открытия.", JOptionPane.WARNING_MESSAGE);
         } else {
             try {
                 FileInfo file = repo.getFileByName(categoriesList.getSelectedValue(), filesList.getSelectedValue());
                 OSOperationsManager.openFile(file);
             } catch (FileNotFoundException e) {
-                String[] options = {"Да","Нет"};
-                int answer = JOptionPane.showOptionDialog(frame,"Файл не найден.\nУдалить информацию о нём из базы?",
-                        "Ошибка",JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
-                        null, options, options[0]);
-                if (answer == JOptionPane.YES_OPTION) {
-                    try {
-                        repo.deleteFile(categoriesList.getSelectedValue(),filesList.getSelectedValue());
-                    } catch (IOException e1) {
-                        showErrorMessage("Ошибка при удалении информации из базы",JOptionPane.ERROR_MESSAGE);
-                    }
-                    refreshLists();
-                }
+                deleteFileInfoIfNotFound();
             } catch (IOException e) {
-                showErrorMessage("Ошибка при открытии файла.", JOptionPane.ERROR_MESSAGE);
+                showMessage("Ошибка при открытии файла.", JOptionPane.ERROR_MESSAGE);
             }
+        }
+    }
+
+    /**
+     * Удаляет информацию о файле, если он не найден на диске
+     */
+    private void deleteFileInfoIfNotFound() {
+        String[] options = {"Да","Нет"};
+        int reply = JOptionPane.showOptionDialog(frame,"Файл не найден.\nУдалить информацию о нём из базы?",
+                "Ошибка",JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
+                null, options, options[0]);
+        if (reply == JOptionPane.YES_OPTION) {
+            try {
+                repo.deleteFile(categoriesList.getSelectedValue(),filesList.getSelectedValue());
+            } catch (IOException e1) {
+                showMessage("Ошибка при удалении информации из базы",JOptionPane.ERROR_MESSAGE);
+            }
+            refreshLists();
         }
     }
 
@@ -374,12 +386,12 @@ public final class MainWindow implements Runnable {
             try {
                 OSOperationsManager.openGithub();
             } catch (IOException e1) {
-                showErrorMessage("Ошибка при открытии браузера.", JOptionPane.ERROR_MESSAGE);
+                showMessage("Ошибка при открытии браузера.", JOptionPane.ERROR_MESSAGE);
             } catch (URISyntaxException e1) {
-                showErrorMessage("Некорректный URI.", JOptionPane.ERROR_MESSAGE);
+                showMessage("Некорректный URI.", JOptionPane.ERROR_MESSAGE);
             }
         });
-        closeButton.addActionListener(e -> infoFrame.setVisible(false));
+        closeButton.addActionListener(e -> infoFrame.dispose());
         buttonPanel.add(link);
         buttonPanel.add(closeButton);
         infoFrame.add(buttonPanel,BorderLayout.SOUTH);
@@ -399,7 +411,6 @@ public final class MainWindow implements Runnable {
                 @Override
                 public void windowDeactivated(WindowEvent e) {
                     refreshLists();
-                    clearFields();
                 }
             });
         }
@@ -421,7 +432,14 @@ public final class MainWindow implements Runnable {
 
         RenamerWindowWithRefresh() {
             super();
-            renameButton.addActionListener(e -> renameOnDisc(categoriesList, filesList));
+            renameButton.addActionListener(e -> {
+                try {
+                    renameOnDisc(categoriesList, filesList);
+                } catch (FileNotFoundException ex) {
+                    deleteFileInfoIfNotFound();
+                    this.dispose();
+                }
+            });
         }
     }
 }

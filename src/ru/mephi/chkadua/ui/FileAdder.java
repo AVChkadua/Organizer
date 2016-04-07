@@ -14,6 +14,7 @@ import java.io.IOException;
  * Класс окна с добавлением материала.
  * @author Anton_Chkadua
  */
+
 class FileAdder extends JFrame {
 
     private JTextField name = new JTextField();
@@ -27,7 +28,6 @@ class FileAdder extends JFrame {
         setTitle("Добавление нового материала");
         JPanel fileAdderPanel = new JPanel(new GridLayout(3, 2));
         filepath.setText("Выберите файл");
-
         filepath.setEditable(false);
         JLabel inputName = new JLabel("Введите название материала");
         JLabel inputCategory = new JLabel("Введите категорию");
@@ -65,7 +65,7 @@ class FileAdder extends JFrame {
     /**
      * Сбрасывает значения всех полей в окне добавления файлов
      */
-    void clearFields() {
+    private void clearFields() {
         filepath.setText("Выберите файл");
         name.setText("");
         category.setText("");
@@ -79,23 +79,25 @@ class FileAdder extends JFrame {
     private void addFile() {
         if (!filepath.getText().equals("Выберите файл")) {
             if (name.getText().trim().isEmpty() || category.getText().trim().isEmpty()) {
-                showErrorDialog("Введите корректные названия материала и категории", JOptionPane.WARNING_MESSAGE);
+                showMessage("Введите корректные названия материала и категории", JOptionPane.WARNING_MESSAGE);
             } else {
                 FileInfo info = new FileInfo();
                 info.setName(name.getText());
                 info.setCategory(category.getText());
                 info.setPath(filepath.getText());
                 try {
-                    FilesInfoRepository.getFilesInfoRepository().addFile(info);
+                    if (!FilesInfoRepository.getFilesInfoRepository().addFile(info)) {
+                        showMessage("Указанный файл уже добавлен", JOptionPane.WARNING_MESSAGE);
+                    } else {
+                        clearFields();
+                        setVisible(false);
+                    }
                 } catch (IOException e1) {
-                    showErrorDialog("Произошла ошибка.\nПопробуйте снова.", JOptionPane.ERROR_MESSAGE);
-                } catch (IllegalArgumentException e) {
-                    showErrorDialog("Указанный файл был добавлен ранее.", JOptionPane.WARNING_MESSAGE);
+                    showMessage("Произошла ошибка.\nПопробуйте снова.", JOptionPane.ERROR_MESSAGE);
                 }
-                FileAdder.this.setVisible(false);
             }
         } else {
-            showErrorDialog("Файл не выбран", JOptionPane.WARNING_MESSAGE);
+            showMessage("Файл не выбран", JOptionPane.WARNING_MESSAGE);
         }
     }
 
@@ -104,7 +106,7 @@ class FileAdder extends JFrame {
      * @param message Сообщение
      * @param warningMessage Константа JOptionPane
      */
-    private void showErrorDialog(String message, int warningMessage) {
+    private void showMessage(String message, int warningMessage) {
         JOptionPane.showMessageDialog(this, message,
                 "Ошибка", warningMessage);
     }
@@ -118,7 +120,7 @@ class FileAdder extends JFrame {
             String pathname = fc.getSelectedFile().getAbsolutePath();
             File f = new File(pathname);
             if (!f.exists()) {
-                showErrorDialog("Файл не найден", JOptionPane.ERROR_MESSAGE);
+                showMessage("Файл не найден", JOptionPane.ERROR_MESSAGE);
             } else {
                 filepath.setText(pathname);
                 name.setEditable(true);

@@ -2,13 +2,11 @@ package ru.mephi.chkadua.ui;
 
 import ru.mephi.chkadua.FileInfo;
 import ru.mephi.chkadua.FilesInfoRepository;
-import ru.mephi.chkadua.InfoParser;
 import ru.mephi.chkadua.OSOperationsManager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
 
@@ -22,6 +20,8 @@ class RenamerWindow extends JFrame{
     JButton renameButton = new JButton();
     private static final int DEFAULT_WIDTH = 300;
     private static final int DEFAULT_HEIGHT = 100;
+    private final FilesInfoRepository repo = FilesInfoRepository.getFilesInfoRepository();
+
     enum RenamerConstants {FILES_LIST, CATEGORIES_LIST}
 
     RenamerWindow(String category, RenamerConstants constant) {
@@ -43,12 +43,6 @@ class RenamerWindow extends JFrame{
         renameButtonPanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
         setSize(new Dimension(DEFAULT_WIDTH,DEFAULT_HEIGHT));
         pack();
-        this.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosed(WindowEvent e) {
-                clearFields();
-            }
-        });
     }
 
     RenamerWindow() {
@@ -89,7 +83,7 @@ class RenamerWindow extends JFrame{
      */
     private void rename(String category, RenamerConstants constant) {
         if (category == null) {
-            showErrorMessage("Выберите файл или категорию для переименования.", JOptionPane.WARNING_MESSAGE);
+            showMessage("Выберите файл или категорию для переименования.", JOptionPane.WARNING_MESSAGE);
         }
         if (constant == RenamerConstants.FILES_LIST) {
             renameFile(category);
@@ -106,14 +100,20 @@ class RenamerWindow extends JFrame{
      */
     private void renameCategory(String category) {
         try {
-            if (!newName.getText().trim().isEmpty()) {
-                InfoParser.renameCategory(category, newName.getText());
-                FilesInfoRepository.getFilesInfoRepository().
-                        renameCategory(category, newName.getText());
-                setVisible(false);
+            if (newName.getText().trim().equals(oldName.getText())) {
+                showMessage("Новое имя совпадает со старым", JOptionPane.WARNING_MESSAGE);
+            } else if (!newName.getText().trim().isEmpty()) {
+                try {
+                    repo.renameCategory(category, newName.getText());
+                    dispose();
+                } catch (IllegalArgumentException e) {
+                    showMessage("Категория с таким именем уже существует", JOptionPane.WARNING_MESSAGE);
+                }
+            } else {
+                showMessage("Введите корректное новое имя", JOptionPane.WARNING_MESSAGE);
             }
         } catch (IOException ex) {
-            showErrorMessage("Ошибка при переименовании категории.", JOptionPane.ERROR_MESSAGE);
+            showMessage("Ошибка при переименовании категории.", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -123,13 +123,20 @@ class RenamerWindow extends JFrame{
      */
     private void renameFile(String category) {
         try {
-            if (!newName.getText().trim().isEmpty()) {
-                FilesInfoRepository.getFilesInfoRepository().
-                        renameFile(category, oldName.getText(), newName.getText());
-                setVisible(false);
+            if (newName.getText().trim().equals(oldName.getText())) {
+                showMessage("Новое имя совпадает со старым.", JOptionPane.WARNING_MESSAGE);
+            } else if (!newName.getText().trim().isEmpty()) {
+                try {
+                    repo.renameFile(category, oldName.getText(), newName.getText());
+                    dispose();
+                } catch (IllegalArgumentException e) {
+                    showMessage("Файл с таким именем уже существует.", JOptionPane.WARNING_MESSAGE);
+                }
+            } else {
+                showMessage("Введите корректное новое имя.",JOptionPane.WARNING_MESSAGE);
             }
         } catch (IOException ex) {
-            showErrorMessage("Ошибка при переименовании файла.", JOptionPane.ERROR_MESSAGE);
+            showMessage("Ошибка при переименовании файла.", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -137,20 +144,22 @@ class RenamerWindow extends JFrame{
      * Переименовывает файл на диске
      * @param categoriesList Список категорий
      * @param filesList Список файлов
+     * @throws FileNotFoundException
      */
-    void renameOnDisc(JList<String> categoriesList, JList<String> filesList) {
+    void renameOnDisc(JList<String> categoriesList, JList<String> filesList) throws FileNotFoundException {
         try {
             if (!oldName.getText().trim().isEmpty()) {
                 String newName = oldName.getText().trim() + suffixLabel.getText();
-                FilesInfoRepository repo = FilesInfoRepository.getFilesInfoRepository();
-                FileInfo file = repo.getFileByName(categoriesList.getSelectedValue(),filesList.getSelectedValue());
-                OSOperationsManager.renameFile(file,newName);
+                FileInfo file = repo.getFileByName(categoriesList.getSelectedValue(), filesList.getSelectedValue());
+                OSOperationsManager.renameFile(file, newName);
                 this.setVisible(false);
             }
+        } catch (FileNotFoundException e) {
+            throw new FileNotFoundException();
         } catch (IOException e) {
-            showErrorMessage("Ошибка при переименовании файла.", JOptionPane.ERROR_MESSAGE);
+            showMessage("Ошибка при переименовании файла.", JOptionPane.ERROR_MESSAGE);
         } catch (InvalidPathException e) {
-            showErrorMessage("Новое имя файла содержит недопустимые символы.", JOptionPane.WARNING_MESSAGE);
+            showMessage("Новое имя файла содержит недопустимые символы.", JOptionPane.WARNING_MESSAGE);
 
         }
     }
@@ -160,17 +169,9 @@ class RenamerWindow extends JFrame{
      * @param message Выводимое сообщение
      * @param warningMessage Константа JOptionPane
      */
-    private void showErrorMessage(String message, int warningMessage) {
+    private void showMessage(String message, int warningMessage) {
         JOptionPane.showMessageDialog(this, message, "Ошибка",
                 warningMessage);
-    }
-
-    /**
-     * Сбрасывает значения текстовых полей
-     */
-    private void clearFields() {
-        oldName.setText("");
-        newName.setText("");
     }
 
     /**
